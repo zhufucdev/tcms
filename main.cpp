@@ -1,7 +1,7 @@
 #include <iostream>
-#include "cms.h"
+#include "tcms.h"
 
 int main() {
-    tcms::initialize();
+    tcms::TCMS::initialize();
     return 0;
 }
