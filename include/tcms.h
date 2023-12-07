@@ -1,3 +1,6 @@
+#ifndef TCMS_H
+#define TCMS_H
+
 #include "content.h"
 #include "metadata.h"
 
@@ -8,3 +11,5 @@ namespace tcms {
     };
 
 }
+
+#endif

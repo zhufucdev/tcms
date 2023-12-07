@@ -1,14 +1,16 @@
+#ifndef TCMS_METADATA_H
+#define TCMS_METADATA_H
+
 #include <string>
 #include "language.h"
 #include "contact.h"
 
 namespace tcms {
-    class Tag {
-        int id;
+    class Tag : public bytes::BinarySerializable {
+        id_type id;
     public:
         explicit Tag(int id);
         virtual std::string to_string() const = 0;
-        virtual ByteArray serialize() const = 0;
     };
 
     class LanguageTag : public Tag {
@@ -31,13 +33,15 @@ namespace tcms {
         static AuthorTag deserialize(ByteArray ba);
     };
 
-    class Metadata {
-        int id;
+    class Metadata : bytes::BinarySerializable {
+        id_type id;
         std::vector<Tag *> tags;
     public:
         Metadata(int id);
         ~Metadata();
-        ByteArray serialize();
+        ByteArray serialize() const override;
         static Metadata deserialize(ByteArray ba);
     };
 }
+
+#endif

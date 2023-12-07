@@ -1,9 +1,14 @@
+#ifndef TCMS_CONTENT_H
+#define TCMS_CONTENT_H
+
 #include <vector>
 #include <string>
+#include "bytes.h"
+#include "increment.h"
 
 namespace tcms {
-    class Frame {
-        int id;
+    class Frame : public bytes::BinarySerializable {
+        id_type id;
     public:
         Frame(int id);
         int get_id();
@@ -48,3 +53,5 @@ namespace tcms {
         std::vector<Frame *> get_frames();
     };
 }
+
+#endif

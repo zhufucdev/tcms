@@ -3,6 +3,18 @@
 
 namespace std {
     std::string to_string(const std::string& str);
+    template<typename T>
+    std::string to_string(const std::vector<T>& v) {
+        int i;
+        std::string r = "[";
+        for (i = 0; i < v.size() - 1; i++) {
+            r += std::to_string(v[i]) + ", ";
+        }
+        for (; i < v.size(); i++) {
+            r += std::to_string(v[i]) + "]";
+        }
+        return r;
+    }
 }
 
 namespace test {

@@ -1,17 +1,31 @@
+#ifndef TCMS_CONTACT_H
+#define TCMS_CONTACT_H
+
 #include <string>
 #include <vector>
 #include "bytes.h"
+#include "increment.h"
 
 namespace tcms {
-    class Contact {
-        int id;
+    class Contact : public bytes::BinarySerializable {
+        id_type id;
         std::vector<std::string> names;
-        Contact(const std::vector<std::string> &names);
+
+        Contact(id_type id, const std::vector<std::string> &names);
+
     public:
-        Contact(std::string first_name);
+        explicit Contact(const std::string &first_name);
+
+        void set_name(size_t index, const std::string &name);
+
         const std::vector<std::string> &get_names() const;
+
         std::string get_full_name() const;
-        ByteArray serialize();
-        Contact *deserialize(ByteArray ba);
+
+        ByteArray serialize() const override;
+
+        static Contact *deserialize(ByteArray ba);
     };
 }
+
+#endif
