@@ -10,3 +10,7 @@ message("${SRC}")
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include" ${SOURCES_DIR})
 add_executable(tcms main.cpp "${SRC}")
+
+set(TESTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+file(GLOB TESTS_SRC "${TESTS_DIR}/*.cpp")
+add_executable(tcms_tests "${TESTS_SRC}" "${SRC}")
