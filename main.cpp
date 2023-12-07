@@ -1,7 +1,10 @@
 #include <iostream>
 #include "tcms.h"
 
+using namespace tcms;
+
 int main() {
-    tcms::TCMS::initialize();
+    TCMS tcms;
+    tcms.initialize();
     return 0;
 }

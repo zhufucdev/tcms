@@ -16,6 +16,8 @@ namespace tcms {
     public:
         LanguageTag(Language language);
         Language get_language() const;
+        ByteArray serialize() const override;
+        std::string to_string() const override;
         static LanguageTag deserialize(ByteArray ba);
     };
 
@@ -24,6 +26,8 @@ namespace tcms {
     public:
         AuthorTag(Contact *author);
         Contact *get_author() const;
+        ByteArray serialize() const override;
+        std::string to_string() const override;
         static AuthorTag deserialize(ByteArray ba);
     };
 
