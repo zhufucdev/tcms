@@ -1,6 +1,7 @@
 #include <iostream>
+#include "cms.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    tcms::initialize();
     return 0;
 }
