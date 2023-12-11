@@ -22,15 +22,19 @@ namespace tcms {
     public:
         TitleFrame(int id, std::string content, int depth);
         std::string to_string() override;
+        ByteArray serialize() const override;
+        static TitleFrame deserialize(ByteArray ba);
     };
 
-    class BodyFrame : public Frame {
+    class ParagraphFrame : public Frame {
     private:
         int id;
         std::string content;
     public:
-        BodyFrame(int id, std::string content);
+        ParagraphFrame(int id, std::string content);
         std::string to_string() override;
+        ByteArray serialize() const override;
+        static ParagraphFrame deserialize(ByteArray ba);
     };
 
     class ImageFrame : public Frame {
@@ -41,9 +45,11 @@ namespace tcms {
         ImageFrame(int id, std::string caption);
         std::string to_string() override;
         std::string get_path();
+        ByteArray serialize() const override;
+        static ImageFrame deserialize(ByteArray ba);
     };
 
-    class Article {
+    class Article : public bytes::BinarySerializable {
     private:
         int id;
     public:
@@ -51,6 +57,8 @@ namespace tcms {
         ~Article();
         int get_id();
         std::vector<Frame *> get_frames();
+        ByteArray serialize() const override;
+        static Article deserialize(ByteArray ba);
     };
 }
 
