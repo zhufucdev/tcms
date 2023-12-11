@@ -39,6 +39,7 @@ ByteArray tcms::Contact::serialize() const {
 tcms::Contact *tcms::Contact::deserialize(ByteArray ba) {
     auto id = bytes::read_number<id_type>(ba.content);
     auto names = bytes::to_string(ba + sizeof(id_type));
+    increment::add_id(id);
     return new Contact{id, names};
 }
 
