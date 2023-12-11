@@ -3,8 +3,8 @@
 #if _WIN32
 #include <windows.h>
 
-void fs::create_directory(const std::string& path) {
-    CreateDirectory(path.c_str(), NULL);
+bool fs::create_directory(const std::string& path) {
+    return CreateDirectory(path.c_str(), NULL) != 0;
 }
 #else
 

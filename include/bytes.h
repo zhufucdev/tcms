@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstring>
 #include <string>
+#include <vector>
 
 struct ByteArray {
     char *content;

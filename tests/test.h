@@ -1,5 +1,6 @@
-#include <exception>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace std {
     std::string to_string(const std::string& str);
