@@ -54,6 +54,14 @@ LanguageTag LanguageTag::deserialize(ByteArray ba)
 	return LanguageTag{id, language};
 }
 
+Metadata::Metadata(id_type id) : id(id) {}
+
+Metadata::~Metadata() {
+    for (auto t : tags) {
+        delete t;
+    }
+}
+
 ByteArray tcms::Metadata::serialize() const
 {
 	auto* serializedTags = new ByteArray[tags.size()];
