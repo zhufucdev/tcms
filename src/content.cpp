@@ -1,5 +1,6 @@
 #include "content.h"
 #include "fs.h"
+#include <stdexcept>
 
 using namespace tcms;
 
