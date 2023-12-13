@@ -77,5 +77,15 @@ ByteArray tcms::Metadata::serialize() const
 
 Metadata tcms::Metadata::deserialize(ByteArray ba)
 {
-
+	id_type id = bytes::read_number<id_type>(ba.content);
+	std::vector<Tag*> tags;
+	size_t currentPos = sizeof(id_type);
+	while (currentPos < ba.len) {
+		AuthorTag* newTag = new AuthorTag(AuthorTag::deserialize({ ba.content + currentPos, ba.len - currentPos }));
+		tags.push_back(newTag);
+		currentPos += newTag->serialize().len;
+	}
+	auto m = Metadata(id);
+	m.tags = tags;
+	return m;
 }
