@@ -18,6 +18,14 @@ bool Language::operator==(const Language &other) {
     return lang_code == other.lang_code && locale_code == other.locale_code;
 }
 
+std::string Language::to_string() const {
+    char *buf = (char *) calloc(sizeof lang_code + sizeof locale_code - 2, sizeof(char));
+    std::memcpy(buf, lang_code, sizeof lang_code - 1);
+    buf[sizeof lang_code - 1] = '_';
+    std::memcpy(buf + sizeof lang_code, locale_code, sizeof locale_code);
+    return buf;
+}
+
 const static char language_codes[][3] = {"aa", "ab", "af", "ak", "sq", "am", "ar", "an", "hy", "as", "av", "ae",
                                          "ay", "az", "ba", "bm", "eu", "be", "bn", "bh", "bi", "bo", "bs", "br",
                                          "bg", "my", "ca", "cs", "ch", "ce", "zh", "cu", "cv", "kw", "co", "cr",
@@ -71,7 +79,7 @@ Language Language::parse(const std::string &expr) {
     }
 
     bool found = false;
-    for (auto locale_code : locale_codes) {
+    for (auto locale_code: locale_codes) {
         if (locale_code == locale) {
             found = true;
             break;
@@ -81,7 +89,7 @@ Language Language::parse(const std::string &expr) {
         throw std::runtime_error("unknown locale (" + locale + ")");
     }
     found = false;
-    for (auto language_code : language_codes) {
+    for (auto language_code: language_codes) {
         if (language_code == lang) {
             found = true;
             break;

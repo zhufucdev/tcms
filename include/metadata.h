@@ -38,7 +38,7 @@ namespace tcms {
         id_type id;
         std::vector<Tag *> tags;
     public:
-        Metadata(id_type id);
+        explicit Metadata(id_type id);
         ~Metadata();
         ByteArray serialize() const override;
         static Metadata deserialize(ByteArray ba);
