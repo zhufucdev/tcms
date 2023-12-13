@@ -14,6 +14,8 @@ public:
 
     std::string get_locale_code() const;
 
+    std::string to_string() const;
+
     bool operator==(const Language &other);
 
     static Language parse(const std::string &expr);

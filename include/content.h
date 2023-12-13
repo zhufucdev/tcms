@@ -6,6 +6,7 @@
 #include <functional>
 #include "bytes.h"
 #include "increment.h"
+#include "fs.h"
 
 namespace tcms {
     class Frame : public bytes::BinarySerializable {
@@ -56,9 +57,9 @@ namespace tcms {
 
         std::string to_string() override;
 
-        void set_file(const std::string &path);
+        void set_file(const Path &path);
 
-        std::string get_path();
+        Path get_path();
 
         ByteArray serialize() const override;
 
