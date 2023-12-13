@@ -3,9 +3,10 @@
 #include <vector>
 
 namespace std {
-    std::string to_string(const std::string& str);
+    std::string to_string(const std::string &str);
+
     template<typename T>
-    std::string to_string(const std::vector<T>& v) {
+    std::string to_string(const std::vector<T> &v) {
         int i;
         std::string r = "[";
         for (i = 0; i < v.size() - 1; i++) {
@@ -19,19 +20,28 @@ namespace std {
 }
 
 namespace test {
-    void complete();
-    void complete(const std::string &test);
+    void completed();
 
-    class assert_exception : public std::runtime_error {
+    void completed(const std::string &test);
+
+    void failed(const std::vector<std::string> &failed_tests);
+
+    class assert_exception : public std::exception {
+        const std::string test_name, message;
     public:
-        explicit assert_exception(const std::string &what_test);
+        explicit assert_exception(const std::string &what_test, const std::string &what_failed);
+
+        const char *what() const noexcept override;
+
+        const std::string &what_test() const noexcept;
     };
 
     template<class T1, class T2>
     class assert_eq_exception : public assert_exception {
     public:
         assert_eq_exception(const std::string &what_test, T1 expected, T2 actual) : assert_exception(
-                what_test + ": assert failed.\n\tExpected: " + std::to_string(expected) + "\n\tActual: " + std::to_string(actual)) {};
+                what_test,
+                "assert failed.\n\tExpected: " + std::to_string(expected) + "\n\tActual: " + std::to_string(actual)) {};
     };
 
     template<class T1, class T2>
@@ -39,15 +49,15 @@ namespace test {
         if (expected != actual) {
             throw assert_eq_exception<T1, T2>(test, expected, actual);
         }
-        complete(test);
+        completed(test);
     }
 
     inline void assert(const std::string &test, bool assumption) {
         if (!assumption) {
-            throw assert_exception(test);
+            throw assert_exception(test, "assert failed");
         }
-        complete(test);
+        completed(test);
     }
 
-    void run_tests(const std::vector<void(*)()>& tests);
+    void run_tests(const std::vector<void (*)()> &tests);
 }
