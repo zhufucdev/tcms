@@ -28,7 +28,7 @@ namespace test {
     };
 
     template<class T1, class T2>
-    class assert_eq_exception : assert_exception {
+    class assert_eq_exception : public assert_exception {
     public:
         assert_eq_exception(const std::string &what_test, T1 expected, T2 actual) : assert_exception(
                 what_test + ": assert failed.\n\tExpected: " + std::to_string(expected) + "\n\tActual: " + std::to_string(actual)) {};
@@ -48,4 +48,6 @@ namespace test {
         }
         complete(test);
     }
+
+    void run_tests(const std::vector<void(*)()>& tests);
 }
