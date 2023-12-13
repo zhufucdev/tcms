@@ -16,6 +16,7 @@ public:
 
 namespace bytes {
     class BinarySerializable {
+    public:
         virtual ByteArray serialize() const = 0;
     };
 
