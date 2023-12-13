@@ -61,9 +61,9 @@ namespace bytes {
 
     template<typename... Args>
     ByteArray from_string(const std::string &first, const Args &...args) {
-        size_t len = req_len(first, args...);
+        size_t len = concat_len(first, args...);
         char *buf = (char *) calloc(len, sizeof(char));
-        append_req_buffer(buf, first, args...);
+        append_bytes_buffer(buf, first, args...);
         return {buf, len};
     }
 
