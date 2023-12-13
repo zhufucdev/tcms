@@ -4,6 +4,7 @@
 #include <string>
 
 class Language {
+public:
     char lang_code[3], locale_code[3];
 
     Language(const char language_code[3], const char locale_code[3]);

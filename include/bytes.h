@@ -6,6 +6,7 @@
 #include <vector>
 
 struct ByteArray {
+public:
     char *content;
     size_t len;
 

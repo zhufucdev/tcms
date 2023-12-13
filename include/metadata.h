@@ -7,16 +7,17 @@
 
 namespace tcms {
     class Tag : public bytes::BinarySerializable {
+    protected:
         id_type id;
     public:
-        explicit Tag(int id);
+        explicit Tag(id_type id);
         virtual std::string to_string() const = 0;
     };
 
     class LanguageTag : public Tag {
         Language lang;
     public:
-        LanguageTag(Language language);
+        LanguageTag(id_type id, Language language);
         Language get_language() const;
         ByteArray serialize() const override;
         std::string to_string() const override;
@@ -26,7 +27,7 @@ namespace tcms {
     class AuthorTag : public Tag {
         Contact *author;
     public:
-        AuthorTag(Contact *author);
+        AuthorTag(id_type id,Contact *author);
         Contact *get_author() const;
         ByteArray serialize() const override;
         std::string to_string() const override;
@@ -37,7 +38,7 @@ namespace tcms {
         id_type id;
         std::vector<Tag *> tags;
     public:
-        Metadata(int id);
+        Metadata(id_type id);
         ~Metadata();
         ByteArray serialize() const override;
         static Metadata deserialize(ByteArray ba);

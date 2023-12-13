@@ -18,5 +18,6 @@ void test_contact() {
 
 int main() {
     test_language();
+    test_contact();
     test::complete();
 }
