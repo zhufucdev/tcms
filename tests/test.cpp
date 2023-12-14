@@ -27,15 +27,15 @@ void test::completed(const std::string &test) {
 }
 
 void test::failed(const std::vector<std::string> &failed_tests) {
-    std::cout << "Test completed with following failures: \n\t";
+    std::cerr << "Test completed with following failures: \n\t";
     int i = 0;
     for (; i < failed_tests.size() - 1; i++) {
-        std::cout << failed_tests[i] << ", ";
+        std::cerr << failed_tests[i] << ", ";
         if (i % 5 == 0) {
-            std::cout << "\n\t";
+            std::cerr << "\n\t";
         }
     }
-    std::cout << failed_tests[i] << std::endl;
+    std::cerr << failed_tests[i] << std::endl;
 }
 
 void test::run_tests(const std::vector<void (*)()> &tests) {
@@ -46,6 +46,9 @@ void test::run_tests(const std::vector<void (*)()> &tests) {
         } catch (const assert_exception &e) {
             std::cout << "[" << e.what_test() << "] " << e.what() << std::endl;
             failures.push_back(e.what_test());
+        } catch (const std::exception &e) {
+            std::cerr << "A unit failed for unknown error: "<< e.what() << std::endl;
+            failures.emplace_back("known");
         }
     }
     if (failures.empty()) {

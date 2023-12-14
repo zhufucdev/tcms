@@ -41,7 +41,7 @@ namespace test {
     public:
         assert_eq_exception(const std::string &what_test, T1 expected, T2 actual) : assert_exception(
                 what_test,
-                "assert failed.\n\tExpected: " + std::to_string(expected) + "\n\tActual: " + std::to_string(actual)) {};
+                "assert failed\n\tExpected: " + std::to_string(expected) + "\n\tActual: " + std::to_string(actual)) {};
     };
 
     template<class T1, class T2>
