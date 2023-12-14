@@ -57,9 +57,9 @@ namespace tcms {
 
         std::string to_string() override;
 
-        void set_file(const Path &path);
+        void set_file(const fs::Path &path);
 
-        Path get_path();
+        fs::Path get_path();
 
         ByteArray serialize() const override;
 

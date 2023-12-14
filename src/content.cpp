@@ -96,14 +96,14 @@ std::string ImageFrame::to_string() {
     return caption;
 }
 
-Path ImageFrame::get_path() {
+fs::Path ImageFrame::get_path() {
     if (extension.empty()) {
-        return Path();
+        return {};
     }
-    return Path (std::to_string(id) + "." + extension);
+    return fs::Path{std::to_string(id) + "." + extension};
 }
 
-void ImageFrame::set_file(const Path &path) {
+void ImageFrame::set_file(const fs::Path &path) {
     if (fs::copy(path, get_path())) {
         extension = fs::get_extension(path);
     } else {

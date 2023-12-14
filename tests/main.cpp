@@ -1,3 +1,4 @@
+#include <fstream>
 #include "tcms.h"
 #include "test.h"
 #include "fs.h"
@@ -18,12 +19,33 @@ void test_contact() {
     test::assert_eq("deserialize_contact", contact.get_names(), dsc->get_names());
 }
 
-void test_fs() {
-    test::assert_eq("get_extension", ".png", fs::get_extension(Path("I_like_bingchilling.png")));
-    test::assert_eq("get_empty_extension", ".", fs::get_extension(Path("IDK")));
+void test_fs_get_extension() {
+    test::assert_eq("get_extension", ".png", fs::get_extension(fs::Path{"I_like_bingchilling.png"}));
+    test::assert_eq("get_empty_extension", ".", fs::get_extension(fs::Path{"IDK"}));
+}
+
+void test_fs_list_files() {
+    fs::create_directory("test_fs_list");
+    for (int i = 0; i < 5; ++i) {
+        std::ofstream ofs("test_fs_list/file" + std::to_string(i));
+        ofs << "Greetings" << std::endl;
+        ofs.close();
+    }
+    int count = 0;
+    for (auto path : fs::list_files({"test_fs_list"})) {
+        if (path[1][0] == '.') {
+            continue;
+        }
+        test::assert_eq("fs_list_get_name_dir", "test_fs_list", path[0]);
+        test::assert_eq("fs_list_get_name_prefix", "file", path[1].substr(0, path[1].length() - 1));
+        auto n = path[1][path[1].length() - 1] - '0';
+        test::assert("fs_list_get_name_suffix", n >= 0 && n <= 5);
+        count++;
+    }
+    test::assert_eq("fs_list_count", 5, count);
 }
 
 int main() {
-    test::run_tests({test_language, test_contact, test_fs});
-    test::complete();
+    test::run_tests({test_language, test_contact,
+                     test_fs_get_extension, test_fs_list_files});
 }
