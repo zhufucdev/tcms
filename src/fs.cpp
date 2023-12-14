@@ -5,7 +5,7 @@
 using namespace fs;
 
 template<char separator>
-inline Path string_to_path_temp(const std::string &str) {
+inline fs::Path string_to_path_temp(const std::string& str) {
     int i, j;
     Path path;
     for (i = 0, j = 0; i < str.length(); i++) {
@@ -18,7 +18,7 @@ inline Path string_to_path_temp(const std::string &str) {
 }
 
 template<char separator>
-inline std::string path_to_string_temp(const Path &path) {
+inline std::string path_to_string_temp(const fs::Path &path) {
     std::string str;
     int i;
     for (i = 0; i < path.size() - 1; ++i) {
@@ -40,14 +40,11 @@ std::string fs::path_to_string(Path path) {
     return path_to_string_temp<'\\'>(path);
 }
 
-Path fs::string_to_path(const std::string &str) {
+fs::Path fs::string_to_path(const std::string &str) {
     return string_to_path_temp<'\\'>(str);
 }
 
-#include <windows.h>
-#include <string>
-
-WindowsFileWalkerIterator(const Path &directory, bool over) : dirpath(directory), over(over) {
+WindowsFileWalkerIterator::WindowsFileWalkerIterator(const Path &directory, bool over) : dirpath(directory), over(over) {
     if (!over) {
         dir = FindFirstFile((path_to_string(directory) + "\\*").c_str(), &ffd);
         if (dir == INVALID_HANDLE_VALUE) {
@@ -56,13 +53,12 @@ WindowsFileWalkerIterator(const Path &directory, bool over) : dirpath(directory)
     }
 }
 
-~WindowsFileWalkerIterator() {
-    if (dir != INVALID_HANDLE_VALUE) {
+WindowsFileWalkerIterator::~WindowsFileWalkerIterator() {
+    if (dir != INVALID_HANDLE_VALUE && (!over || count > 0)) {
         FindClose(dir);
     }
 }
-
-WindowsFileWalkerIterator &operator++() override {
+WindowsFileWalkerIterator &WindowsFileWalkerIterator::operator++() {
     if (!over) {
         if (!FindNextFile(dir, &ffd)) {
             over = true;
@@ -73,19 +69,22 @@ WindowsFileWalkerIterator &operator++() override {
     return *this;
 }
 
-bool operator==(const WindowsFileWalkerIterator &other) const override {
+bool WindowsFileWalkerIterator::operator==(const WindowsFileWalkerIterator &other) const {
     if (over) {
         return other.over;
+    }
+    else if (other.over) {
+        return false;
     } else {
         return other.count == count;
     }
 }
 
-bool operator!=(const WindowsFileWalkerIterator &other) const override {
+bool WindowsFileWalkerIterator::operator!=(const WindowsFileWalkerIterator &other) const {
     return !(*this == other);
 }
 
-Path operator*() const override {
+Path WindowsFileWalkerIterator::operator*() const {
     if (over) {
         throw std::runtime_error("dereferencing end iterator");
     }
@@ -94,8 +93,9 @@ Path operator*() const override {
     return path;
 }
 
-FileIteratable<WindowsFileWalterIterator> *fs::list_files(const Path& directory) {
-    return FileIterable<WindowsFileWalterIterator>{new WindowsFileWalkerIterator(directory)};
+FileIterable<WindowsFileWalkerIterator> fs::list_files(const Path& directory) {
+    return FileIterable<WindowsFileWalkerIterator>{new WindowsFileWalkerIterator(directory),
+        new WindowsFileWalkerIterator(directory, true)};
 }
 
 #else

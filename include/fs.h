@@ -32,19 +32,22 @@ namespace fs {
     };
 
 #if _WIN32
-    class WindowsFileWalkerIterator : FileIterator {
+#include <windows.h>
+    class WindowsFileWalkerIterator : public FileIterator {
         Path dirpath;
         HANDLE dir;
         WIN32_FIND_DATA ffd;
         bool over = false;
         int count = 0;
     public:
-        WindowsFileWalkerIterator(const Path &directory, bool over = false);
+        WindowsFileWalkerIterator(const Path& directory, bool over = false);
         ~WindowsFileWalkerIterator();
-        bool operator==(const WindowsFileWalkerIterator &other) const override;
-        bool operator!=(const WindowsFileWalkerIterator &other) const override;
-        Path operator*() const override;
-    }
+        WindowsFileWalkerIterator& operator++();
+        bool operator==(const WindowsFileWalkerIterator& other) const;
+        bool operator!=(const WindowsFileWalkerIterator& other) const;
+        Path operator*() const;
+    };
+
     FileIterable<WindowsFileWalkerIterator> list_files(const Path &directory);
 #else
 
