@@ -131,6 +131,9 @@ UnixFileWalkerIterator::UnixFileWalkerIterator(const Path &directory, bool over)
 
 UnixFileWalkerIterator::~UnixFileWalkerIterator() {
     delete ent;
+    if (!over) {
+        closedir(dir);
+    }
 }
 
 UnixFileWalkerIterator &UnixFileWalkerIterator::operator++() {
