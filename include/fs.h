@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "bytes.h"
 
 namespace fs {
     typedef std::vector<std::string> Path;
@@ -16,6 +17,8 @@ namespace fs {
     std::string path_to_string(Path path);
 
     Path string_to_path(const std::string &str);
+
+    void write_file(const Path &dst, const ByteArray &src);
 
     typedef std::iterator<std::input_iterator_tag, Path, int, const fs::Path *, Path> FileIterator;
 

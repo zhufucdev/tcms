@@ -196,4 +196,8 @@ std::string fs::get_extension(const Path &path) {
     return ".";
 }
 
-
+void fs::write_file(const fs::Path &dst, const ByteArray &src) {
+    std::ofstream ofs(path_to_string(dst));
+    ofs.write(src.content, src.len);
+    ofs.close();
+}
