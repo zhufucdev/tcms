@@ -6,10 +6,12 @@
 
 namespace tcms {
     class TCMS {
+        bool running;
     public:
-        void initialize();
+        TCMS();
+        void event_loop();
+        void interrupt(int signal);
     };
-
 }
 
 #endif

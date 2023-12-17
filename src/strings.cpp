@@ -24,5 +24,8 @@ std::vector<std::string> strings::split(const std::string &str, char separator) 
             j = i + 1;
         }
     }
+    if (i != j) {
+        buf.emplace_back(str.substr(j, i));
+    }
     return buf;
 }
