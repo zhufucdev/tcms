@@ -61,12 +61,12 @@ bool fs::create_directory(const std::string& path) {
     return CreateDirectory(path.c_str(), NULL) != 0;
 }
 
-std::string fs::path_to_string(Path path) {
-    return path_to_string_temp<'\\'>(path);
+std::string fs::path_to_string(const Path &path) {
+    return path_to_string_impl<'\\'>(path);
 }
 
 fs::Path fs::string_to_path(const std::string &str) {
-    return string_to_path_temp<'\\'>(str);
+    return string_to_path_impl<'\\'>(str);
 }
 
 WindowsFileWalkerIterator::WindowsFileWalkerIterator(const Path &directory, bool over) : dirpath(directory), over(over) {
