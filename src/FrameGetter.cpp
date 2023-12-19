@@ -49,6 +49,7 @@ FrameGetter *FrameGetter::from_file(const fs::Path &path) {
     auto buf = (char *) malloc(sizeof(id_type));
     ifs >> buf;
     auto id = bytes::read_number<id_type>(buf);
+    ifs.close();
     return new FrameGetter(id, (FrameType) type);
 }
 
