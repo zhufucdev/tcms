@@ -227,7 +227,7 @@ void fs::write_file(const fs::Path &dst, const ByteArray &src) {
     ofs.close();
 }
 
-ByteArray read_file(const Path &src) {
+ByteArray fs::read_file(const Path &src) {
     std::ifstream ifs(path_to_string(src), std::ifstream::binary);
     ifs.seekg(0, std::ifstream::end);
     size_t len = ifs.tellg();
@@ -236,7 +236,7 @@ ByteArray read_file(const Path &src) {
     return {buf, len};
 }
 
-bool is_hidden(const Path &path) {
+bool fs::is_hidden(const Path &path) {
     auto name = get_name(path);
     if (name.empty()) {
         return false;
