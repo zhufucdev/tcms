@@ -9,6 +9,12 @@
 #include "fs.h"
 
 namespace tcms {
+    enum FrameType {
+        TITLE = 0,
+        PARAGRAPH,
+        IMAGE
+    };
+
     class Frame : public bytes::BinarySerializable {
         id_type id;
     public:
@@ -18,6 +24,7 @@ namespace tcms {
 
         virtual std::string to_string() = 0;
     };
+
 
     class TitleFrame : public Frame {
     private:
@@ -31,7 +38,7 @@ namespace tcms {
 
         ByteArray serialize() const override;
 
-        static TitleFrame deserialize(ByteArray ba);
+        static TitleFrame *deserialize(ByteArray ba);
     };
 
     class ParagraphFrame : public Frame {
@@ -45,7 +52,7 @@ namespace tcms {
 
         ByteArray serialize() const override;
 
-        static ParagraphFrame deserialize(ByteArray ba);
+        static ParagraphFrame *deserialize(ByteArray ba);
     };
 
     class ImageFrame : public Frame {
@@ -63,26 +70,9 @@ namespace tcms {
 
         ByteArray serialize() const override;
 
-        static ImageFrame deserialize(ByteArray ba);
+        static ImageFrame *deserialize(ByteArray ba);
     };
 
-    class Article : public bytes::BinarySerializable {
-    private:
-        id_type id;
-        std::vector<Frame *> frames;
-    public:
-        explicit Article(id_type id);
-
-        ~Article();
-
-        id_type get_id() const;
-
-        std::vector<Frame *> get_frames();
-
-        ByteArray serialize() const override;
-
-        static Article deserialize(ByteArray ba, const std::function<Frame *(id_type id)>& getter);
-    };
 }
 
 #endif

@@ -1,12 +1,12 @@
 #ifndef TCMS_H
 #define TCMS_H
 
-#include "content.h"
-#include "metadata.h"
+#include "Article.h"
 
 namespace tcms {
     class TCMS {
         bool running;
+        std::vector<Article *> articles;
     public:
         TCMS();
         void event_loop();

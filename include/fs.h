@@ -14,11 +14,19 @@ namespace fs {
 
     std::string get_extension(const Path &path);
 
-    std::string path_to_string(Path path);
+    std::string path_to_string(const Path& path);
 
     Path string_to_path(const std::string &str);
 
+    std::string get_name(const Path &path);
+
+    std::string get_name_without_extension(const Path &path);
+
+    bool is_hidden(const Path &path);
+
     void write_file(const Path &dst, const ByteArray &src);
+
+    ByteArray read_file(const Path &src);
 
     typedef std::iterator<std::input_iterator_tag, Path, int, const fs::Path *, Path> FileIterator;
 

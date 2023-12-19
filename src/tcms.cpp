@@ -5,11 +5,20 @@
 
 using namespace std;
 
-tcms::TCMS::TCMS() : running(false) {
+tcms::TCMS::TCMS() : running(false), articles() {
     fs::create_directory("content");
     fs::create_directory("metadata");
     fs::create_directory("frames");
     fs::create_directory("metadata/tag");
+
+    for (auto file: fs::list_files(fs::Path{"content"})) {
+        if (fs::is_hidden(file)) {
+            continue;
+        }
+        auto ba = fs::read_file(file);
+        auto article = Article::deserialize(ba);
+        articles.push_back(article);
+    }
 }
 
 enum CommandResult {
@@ -57,9 +66,9 @@ void print_usage(const tuple<Ts...> &manual) {
 }
 
 template<typename Handler>
-void print_help(Handler handler) {
-    cout << "  " << get<0>(handler) << ' ';
-    auto manual = get<1>(handler);
+void print_help(Handler last_handler) {
+    cout << "  " << get<0>(last_handler) << ' ';
+    auto manual = get<1>(last_handler);
     print_usage(manual);
 }
 

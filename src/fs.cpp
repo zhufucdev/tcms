@@ -5,7 +5,7 @@
 using namespace fs;
 
 template<char separator>
-inline fs::Path string_to_path_temp(const std::string& str) {
+inline fs::Path string_to_path_impl(const std::string &str) {
     int i, j;
     Path path;
     for (i = 0, j = 0; i < str.length(); i++) {
@@ -18,7 +18,7 @@ inline fs::Path string_to_path_temp(const std::string& str) {
 }
 
 template<char separator>
-inline std::string path_to_string_temp(const fs::Path &path) {
+inline std::string path_to_string_impl(const fs::Path &path) {
     std::string str;
     int i;
     for (i = 0; i < path.size() - 1; ++i) {
@@ -27,6 +27,31 @@ inline std::string path_to_string_temp(const fs::Path &path) {
     }
     str += path[i];
     return str;
+}
+
+std::string fs::get_name(const fs::Path &path) {
+    if (path.empty()) {
+        return "";
+    }
+    return path[path.size() - 1];
+}
+
+std::string fs::get_name_without_extension(const fs::Path &path) {
+    if (path.empty()) {
+        return "";
+    }
+    auto name = path[path.size() - 1];
+    int i;
+    for (i = 0; i < name.length(); ++i) {
+        if (name[i] == '.') {
+            break;
+        }
+    }
+    if (i >= name.length()) {
+        return "";
+    }
+
+    return name.substr(i + 1);
 }
 
 #if _WIN32
@@ -107,12 +132,12 @@ bool fs::create_directory(const std::string &path) {
     return mkdir(path.c_str(), 0777) != -1;
 }
 
-std::string fs::path_to_string(Path path) {
-    return path_to_string_temp<'/'>(path);
+std::string fs::path_to_string(const Path &path) {
+    return path_to_string_impl<'/'>(path);
 }
 
 Path fs::string_to_path(const std::string &str) {
-    return string_to_path_temp<'/'>(str);
+    return string_to_path_impl<'/'>(str);
 }
 
 UnixFileWalkerIterator::UnixFileWalkerIterator(const Path &directory, bool over) : dirpath(directory), over(over) {
@@ -200,4 +225,22 @@ void fs::write_file(const fs::Path &dst, const ByteArray &src) {
     std::ofstream ofs(path_to_string(dst));
     ofs.write(src.content, src.len);
     ofs.close();
+}
+
+ByteArray read_file(const Path &src) {
+    std::ifstream ifs(path_to_string(src), std::ifstream::binary);
+    ifs.seekg(0, std::ifstream::end);
+    size_t len = ifs.tellg();
+    char *buf = (char *) calloc(len, sizeof(char));
+    ifs.read(buf, len);
+    return {buf, len};
+}
+
+bool is_hidden(const Path &path) {
+    auto name = get_name(path);
+    if (name.empty()) {
+        return false;
+    } else {
+        return name[0] == '.';
+    }
 }
