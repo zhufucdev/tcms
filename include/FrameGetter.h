@@ -21,13 +21,13 @@ namespace tcms {
 
         ~FrameGetter();
 
-        Frame *get();
+        Frame *get() const;
 
         FrameType get_type() const;
 
         id_type get_id() const;
 
-        static FrameGetter from_file(const fs::Path &path);
+        static FrameGetter from_file(id_type id);
     };
 }
 

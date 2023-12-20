@@ -22,7 +22,7 @@ id_type ContactGetter::get_id() const {
     return id;
 }
 
-Contact *ContactGetter::get() {
+Contact *ContactGetter::get() const {
     try {
         return cache.at(id);
     } catch (const std::out_of_range &e) {

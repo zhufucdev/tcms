@@ -4,7 +4,7 @@
 using namespace tcms;
 
 fs::Path get_path(id_type id) {
-    return fs::Path{"tcms", "frame_getters", std::to_string(id)};
+    return fs::Path{"frames", std::to_string(id)};
 }
 
 std::map<id_type, Frame *> FrameGetter::cache{};
@@ -21,7 +21,7 @@ FrameGetter::~FrameGetter() {
     }
 }
 
-Frame *FrameGetter::get() {
+Frame *FrameGetter::get() const {
     try {
         return cache.at(id);
     } catch (const std::out_of_range &e) {
@@ -53,13 +53,10 @@ id_type FrameGetter::get_id() const {
     return id;
 }
 
-FrameGetter FrameGetter::from_file(const fs::Path &path) {
-    std::ifstream ifs(fs::path_to_string(path));
+FrameGetter FrameGetter::from_file(id_type id) {
+    std::ifstream ifs(fs::path_to_string(get_path(id)));
     char type;
     ifs >> type;
-    auto buf = (char *) malloc(sizeof(id_type));
-    ifs.read(buf, sizeof(id_type));
-    auto id = bytes::read_number<id_type>(buf);
     ifs.close();
     return {id, (FrameType) type};
 }

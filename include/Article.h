@@ -11,18 +11,18 @@ namespace tcms {
     class Article : public bytes::BinarySerializable {
     private:
         id_type id;
-        std::vector<FrameGetter *> frame_getters;
-        std::vector<Tag *> tags;
+        std::vector<FrameGetter> frames;
+        Metadata metadata;
     public:
-        explicit Article(id_type id);
+        explicit Article(id_type id, const Metadata &metadata, const std::vector<FrameGetter> &frames);
 
         ~Article();
 
         id_type get_id() const;
 
-        std::vector<FrameGetter *> get_frames() const;
+        std::vector<FrameGetter> get_frames() const;
 
-        std::vector<Tag *> get_tags() const;
+        Metadata &get_metadata();
 
         ByteArray serialize() const override;
 

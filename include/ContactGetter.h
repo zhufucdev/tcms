@@ -22,7 +22,7 @@ namespace tcms {
 
         id_type get_id() const;
 
-        Contact *get();
+        Contact *get() const;
 
         static ContactGetter from_file(const fs::Path &path);
     };

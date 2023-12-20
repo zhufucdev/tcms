@@ -3,18 +3,19 @@
 
 #include <string>
 #include "language.h"
-#include "Contact.h"
+#include "ContactGetter.h"
 
 namespace tcms {
     class Tag : public bytes::BinarySerializable {
     public:
         virtual std::string to_string() const = 0;
+        static Tag *deserialize(ByteArray ba);
     };
 
     class LanguageTag : public Tag {
         Language lang;
     public:
-        LanguageTag(id_type id, Language language);
+        explicit LanguageTag(Language language);
 
         Language get_language() const;
 
@@ -22,13 +23,13 @@ namespace tcms {
 
         std::string to_string() const override;
 
-        static LanguageTag deserialize(ByteArray ba);
+        static LanguageTag *deserialize(ByteArray ba);
     };
 
     class AuthorTag : public Tag {
-        Contact *author;
+        ContactGetter author;
     public:
-        AuthorTag(id_type id, Contact *author);
+        explicit AuthorTag(id_type author_id);
 
         Contact *get_author() const;
 
@@ -36,7 +37,7 @@ namespace tcms {
 
         std::string to_string() const override;
 
-        static AuthorTag deserialize(ByteArray ba);
+        static AuthorTag *deserialize(ByteArray ba);
     };
 
     class Metadata : bytes::BinarySerializable {
@@ -48,6 +49,8 @@ namespace tcms {
         ~Metadata();
 
         ByteArray serialize() const override;
+
+        std::vector<Tag *> get_tags() const;
 
         static Metadata deserialize(ByteArray ba);
     };
