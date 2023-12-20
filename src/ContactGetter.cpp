@@ -5,6 +5,10 @@ using namespace tcms;
 std::map<id_type, size_t> ContactGetter::rc{};
 std::map<id_type, Contact *> ContactGetter::cache{};
 
+fs::Path get_contact_path(id_type id) {
+    return fs::Path{"contacts", std::to_string(id)};
+}
+
 ContactGetter::ContactGetter(id_type id) : id(id) {}
 
 ContactGetter::~ContactGetter() {
@@ -14,10 +18,6 @@ ContactGetter::~ContactGetter() {
         rc.erase(id);
         cache.erase(id);
     }
-}
-
-fs::Path get_contact_path(id_type id) {
-    return fs::Path{"metadata", std::to_string(id)};
 }
 
 id_type ContactGetter::get_id() const {
@@ -40,8 +40,13 @@ Contact *ContactGetter::get() const {
 
 MemoryContactGetter::MemoryContactGetter(tcms::Contact *contact)
         : contact(contact), ContactGetter(contact->get_id()) {
-    cache[contact->get_id()] = contact;
-    rc[contact->get_id()] = 1;
+    auto id = contact->get_id();
+    cache[id] = contact;
+    if (rc.count(id)) {
+        rc[id]++;
+    } else {
+        rc[id] = 1;
+    }
 }
 
 Contact *MemoryContactGetter::get() const {
