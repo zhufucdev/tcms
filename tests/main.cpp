@@ -1,5 +1,4 @@
 #include <fstream>
-#include "TCMS.h"
 #include "test.h"
 #include "fs.h"
 #include "metadata.h"
@@ -33,7 +32,7 @@ void test_fs_list_files() {
         ofs.close();
     }
     int count = 0;
-    for (auto path : fs::list_files({"test_fs_list"})) {
+    for (auto path: fs::list_files({"test_fs_list"})) {
         if (path[1][0] == '.') {
             continue;
         }
@@ -49,15 +48,15 @@ void test_fs_list_files() {
 void test_metadata() {
     tcms::Metadata metadata;
     tcms::LanguageTag lang(Language::parse("zh_CN"));
-    tcms::ConstantContactGetter at(new tcms::Contact("John"));
-    at.get()->set_name(1, "Cena");
+    auto author = tcms::Contact("John");
+    author.set_name(1, "Cena");
 
     metadata.add_tag(new tcms::LanguageTag(lang));
-    metadata.add_tag(new tcms::AuthorTag(&at));
+    metadata.add_tag(new tcms::AuthorTag(&author));
     auto ba = metadata.serialize();
     metadata = tcms::Metadata::deserialize(ba);
     test::assert_eq("metadata_lang_tag", lang.to_string(), metadata.get_tags()[0]->to_string());
-    test::assert_eq("metadata_author_tag", at.get()->get_full_name(), metadata.get_tags()[1]->to_string());
+    test::assert_eq("metadata_author_tag", author.get_full_name(), metadata.get_tags()[1]->to_string());
 }
 
 int main() {
