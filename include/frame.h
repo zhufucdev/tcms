@@ -1,5 +1,5 @@
-#ifndef TCMS_CONTENT_H
-#define TCMS_CONTENT_H
+#ifndef TCMS_FRAME_H
+#define TCMS_FRAME_H
 
 #include <vector>
 #include <string>
@@ -15,7 +15,7 @@ namespace tcms {
         IMAGE
     };
 
-    class Frame : public bytes::BinarySerializable {
+    class Frame : public fs::FileWritable {
         id_type id;
     public:
         explicit Frame(id_type id);
@@ -24,7 +24,11 @@ namespace tcms {
 
         virtual FrameType get_type() const = 0;
 
+        fs::Path get_path() const override;
+
         virtual std::string to_string() = 0;
+
+        static fs::Path get_path(id_type id);
     };
 
 

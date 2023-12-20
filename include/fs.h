@@ -14,7 +14,7 @@ namespace fs {
 
     std::string get_extension(const Path &path);
 
-    std::string path_to_string(const Path& path);
+    std::string path_to_string(const Path &path);
 
     Path string_to_path(const std::string &str);
 
@@ -40,6 +40,13 @@ namespace fs {
         Iterator &begin() const { return *b; }
 
         Iterator &end() const { return *e; }
+    };
+
+    class FileWritable : public bytes::BinarySerializable {
+    public:
+        virtual Path get_path() const = 0;
+
+        virtual void write_to_file();
     };
 
 #if _WIN32

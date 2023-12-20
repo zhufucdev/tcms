@@ -231,6 +231,7 @@ ByteArray fs::read_file(const Path &src) {
     std::ifstream ifs(path_to_string(src), std::ifstream::binary);
     ifs.seekg(0, std::ifstream::end);
     size_t len = ifs.tellg();
+    ifs.seekg(0, std::ifstream::beg);
     char *buf = (char *) calloc(len, sizeof(char));
     ifs.read(buf, len);
     return {buf, len};
@@ -243,4 +244,9 @@ bool fs::is_hidden(const Path &path) {
     } else {
         return name[0] == '.';
     }
+}
+
+void FileWritable::write_to_file() {
+    auto ba = serialize();
+    fs::write_file(get_path(), ba);
 }

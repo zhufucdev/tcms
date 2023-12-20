@@ -3,12 +3,12 @@
 
 #include "bytes.h"
 #include "increment.h"
-#include "content.h"
+#include "frame.h"
 #include "metadata.h"
 #include "FrameGetter.h"
 
 namespace tcms {
-    class Article : public bytes::BinarySerializable {
+    class Article : public fs::FileWritable {
     private:
         std::string name;
         id_type id;
@@ -22,9 +22,13 @@ namespace tcms {
 
         Article(const std::string &name);
 
-        ~Article();
+        ~Article() = default;
 
         id_type get_id() const;
+
+        std::string get_name() const;
+
+        fs::Path get_path() const override;
 
         std::vector<FrameGetter *> get_frames() const;
 

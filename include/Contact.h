@@ -3,11 +3,11 @@
 
 #include <string>
 #include <vector>
-#include "bytes.h"
+#include "fs.h"
 #include "increment.h"
 
 namespace tcms {
-    class Contact : public bytes::BinarySerializable {
+    class Contact : public fs::FileWritable {
         id_type id;
         std::vector<std::string> names;
 
@@ -18,6 +18,8 @@ namespace tcms {
 
         id_type get_id() const;
 
+        fs::Path get_path() const override;
+
         void set_name(size_t index, const std::string &name);
 
         const std::vector<std::string> &get_names() const;
@@ -27,6 +29,8 @@ namespace tcms {
         ByteArray serialize() const override;
 
         static Contact *deserialize(ByteArray ba);
+
+        static fs::Path get_path(id_type id);
     };
 }
 

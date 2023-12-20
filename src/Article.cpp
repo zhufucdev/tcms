@@ -7,10 +7,16 @@ Article::Article(id_type id, const std::string &name, const Metadata &metadata, 
 
 Article::Article(const std::string &name) : name(name), id(increment::get_next_id()), frames(), metadata() {}
 
-Article::~Article() = default;
-
 int Article::get_id() const {
     return id;
+}
+
+std::string Article::get_name() const {
+    return name;
+}
+
+fs::Path Article::get_path() const {
+    return fs::Path{"content", std::to_string(id)};
 }
 
 std::vector<FrameGetter*> Article::get_frames() const {
@@ -27,10 +33,12 @@ Metadata &Article::get_metadata() {
 
 ByteArray Article::serialize() const {
     auto mba = metadata.serialize();
-    size_t len = sizeof(id_type) * (frames.size() + mba.len + 1) + sizeof(size_t);
+    size_t len = sizeof(id_type) * (frames.size() + 1) + name.length() + 1 + mba.len + sizeof(size_t);
     auto buf = (char *) calloc(len, sizeof(char));
     bytes::write_number(buf, id);
     size_t ptr = sizeof(id_type);
+    std::memcpy(buf + ptr, name.c_str(), name.length());
+    ptr += name.length() + 1;
     bytes::write_number<size_t>(buf + ptr, frames.size());
     ptr += sizeof(size_t);
     for (const auto &frame: frames) {
@@ -56,7 +64,7 @@ Article *Article::deserialize(ByteArray ba) {
         ptr += sizeof(id_type);
         frames.push_back(FrameGetter::from_file(fid));
     }
-    auto metadata = Metadata::deserialize(ba - ptr);
+    auto metadata = Metadata::deserialize(ba + ptr);
     auto article = new Article(id, name, metadata, frames);
     return article;
 }

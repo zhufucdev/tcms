@@ -1,6 +1,7 @@
 #include "TCMS.h"
 #include "fs.h"
 #include "strings.h"
+#include "terminal.h"
 #include <iostream>
 
 using namespace std;
@@ -15,8 +16,18 @@ tcms::TCMS::TCMS() : running(false), articles() {
             continue;
         }
         auto ba = fs::read_file(file);
-        auto article = Article::deserialize(ba);
-        articles.push_back(article);
+        try {
+            auto article = Article::deserialize(ba);
+            articles.push_back(article);
+        } catch (const std::exception &any) {
+            cerr << "Error while reading " << fs::path_to_string(file) << ": " << any.what() << endl;
+        }
+    }
+}
+
+tcms::TCMS::~TCMS() {
+    for (auto a: articles) {
+        delete a;
     }
 }
 
@@ -145,8 +156,49 @@ void tcms::TCMS::event_loop() {
                         make_tuple("-l", "pattern", "List (matching) articles"),
                         [&](auto args) {
                             for (auto a: articles) {
-
+                                cout << a->get_name() << '\t';
                             }
+                            cout << endl;
+                            return CommandResult::SUCCESS;
+                        }
+                ),
+                make_tuple(
+                        "touch",
+                        make_tuple("name", "Create an article"),
+                        [&](auto args) {
+                            if (args.size() != 2) {
+                                cout << "Invalid arguments." << endl;
+                                return CommandResult::EMPTY;
+                            }
+                            if (new_article(args[1])) {
+                                return CommandResult::SUCCESS;
+                            } else {
+                                cout << "Duplicated name: " << args[1] << endl;
+                                return CommandResult::EMPTY;
+                            }
+                        }
+                ),
+                make_tuple(
+                        "rm",
+                        make_tuple("name", "Delete an article"),
+                        [&](auto args) {
+                            if (args.size() != 2) {
+                                cout << "Invalid arguments." << endl;
+                                return CommandResult::EMPTY;
+                            }
+                            if (delete_article(args[1])) {
+                                return CommandResult::SUCCESS;
+                            } else {
+                                cout << "No such article: " << args[1] << endl;
+                                return CommandResult::EMPTY;
+                            }
+                        }
+                ),
+                make_tuple(
+                        "clear",
+                        make_tuple("Clear the screen"),
+                        [](auto args) {
+                            terminal::clear_screen();
                             return CommandResult::SUCCESS;
                         }
                 ),
@@ -176,4 +228,20 @@ void tcms::TCMS::event_loop() {
 void tcms::TCMS::interrupt(int signal) {
     running = false;
     exit(signal);
+}
+
+bool tcms::TCMS::new_article(const std::string &name) {
+    if (std::find_if(articles.begin(), articles.end(), [&](auto a) { return a->get_name() == name; }) !=
+        articles.end()) {
+        return false;
+    } else {
+        auto a = new Article(name);
+        articles.push_back(a);
+        a->write_to_file();
+        return true;
+    }
+}
+
+bool tcms::TCMS::delete_article(const std::string &name) {
+
 }

@@ -6,7 +6,7 @@
 #define TCMS_FRAMEGETTER_H
 
 #include "increment.h"
-#include "content.h"
+#include "frame.h"
 #include <map>
 
 namespace tcms {

@@ -5,10 +5,6 @@ using namespace tcms;
 std::map<id_type, size_t> ContactGetter::rc{};
 std::map<id_type, Contact *> ContactGetter::cache{};
 
-fs::Path get_contact_path(id_type id) {
-    return fs::Path{"contacts", std::to_string(id)};
-}
-
 ContactGetter::ContactGetter(id_type id) : id(id) {}
 
 ContactGetter::~ContactGetter() {
@@ -31,7 +27,7 @@ Contact *ContactGetter::get() const {
         // ignored
     }
 
-    auto ba = fs::read_file(get_contact_path(id));
+    auto ba = fs::read_file(Contact::get_path(id));
     auto contact = Contact::deserialize(ba);
     cache[id] = contact;
     rc[id] = 1;

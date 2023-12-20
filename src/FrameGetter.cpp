@@ -3,10 +3,6 @@
 
 using namespace tcms;
 
-fs::Path get_frame_path(id_type id) {
-    return fs::Path{"frames", std::to_string(id)};
-}
-
 std::map<id_type, Frame *> FrameGetter::cache{};
 std::map<id_type, size_t> FrameGetter::rc{};
 
@@ -28,7 +24,7 @@ Frame *FrameGetter::get() const {
         // ignored
     }
 
-    auto ba = fs::read_file(get_frame_path(id));
+    auto ba = fs::read_file(Frame::get_path(id));
     Frame *frame;
     switch (type) {
         case FrameType::TITLE:
@@ -54,7 +50,7 @@ id_type FrameGetter::get_id() const {
 }
 
 FrameGetter *FrameGetter::from_file(id_type id) {
-    std::ifstream ifs(fs::path_to_string(get_frame_path(id)));
+    std::ifstream ifs(fs::path_to_string(Frame::get_path(id)));
     char type;
     ifs >> type;
     ifs.close();

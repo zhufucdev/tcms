@@ -116,7 +116,11 @@ Metadata tcms::Metadata::deserialize(ByteArray ba) {
     size_t current_pos = 0;
     while (current_pos < ba.len) {
         auto curr_size = bytes::read_number<size_t>(ba.content + current_pos);
-        auto sp = std::shared_ptr<Tag>(Tag::deserialize(ba + current_pos + sizeof(size_t)));
+        auto curr_ba = ba + current_pos + sizeof(size_t);
+        if (curr_ba.len <= 0) {
+            break;
+        }
+        auto sp = std::shared_ptr<Tag>(Tag::deserialize(curr_ba));
         tags.push_back(sp);
         current_pos += curr_size + sizeof(size_t);
     }
