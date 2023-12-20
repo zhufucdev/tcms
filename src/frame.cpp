@@ -94,17 +94,17 @@ std::string ImageFrame::to_string() {
     return caption;
 }
 
-fs::Path ImageFrame::get_path() {
+fs::Path ImageFrame::get_image_path() {
     if (extension.empty()) {
         return {};
     }
-    return fs::Path{std::to_string(id) + "." + extension};
+    return fs::Path{"images", std::to_string(id) + extension};
 }
 
 void ImageFrame::set_file(const fs::Path &path) {
-    if (fs::copy(path, get_path())) {
-        extension = fs::get_extension(path);
-    } else {
+    extension = fs::get_extension(path);
+    if (!fs::copy(path, get_image_path())) {
+        extension = "";
         throw std::runtime_error("error while copying image file (copying " + fs::path_to_string(path) + ")");
     }
 }

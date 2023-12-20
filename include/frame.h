@@ -87,7 +87,7 @@ namespace tcms {
 
         void set_file(const fs::Path &path);
 
-        fs::Path get_path();
+        fs::Path get_image_path();
 
         ByteArray serialize() const override;
 

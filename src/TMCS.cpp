@@ -11,6 +11,7 @@ tcms::TCMS::TCMS() : running(false), articles() {
     fs::create_directory("content");
     fs::create_directory("frames");
     fs::create_directory("contacts");
+    fs::create_directory("images");
 
     for (auto file: fs::list_files(fs::Path{"content"})) {
         if (fs::is_hidden(file)) {
@@ -348,11 +349,48 @@ bool tcms::TCMS::change_work(tcms::Article *article) {
                                 offset = 3;
                             }
                             if (args.size() <= offset) {
-                                cerr << "lack argument to title content" << endl;
+                                cerr << "lack parameter to title content" << endl;
                                 return CommandResult::EMPTY;
                             }
 
                             article->add_frame(new TitleFrame(terminal::read_paragraph(args, offset), depth));
+                            return CommandResult::SUCCESS;
+                        }
+                ),
+                make_tuple(
+                        "p",
+                        make_tuple("paragraph...", "Append a paragraph"),
+                        [&](auto args) {
+                            if (args.size() < 2) {
+                                cerr << "lack parameter to paragraph content" << endl;
+                                return CommandResult::EMPTY;
+                            } else {
+                                article->add_frame(new ParagraphFrame(terminal::read_paragraph(args)));
+                                return CommandResult::SUCCESS;
+                            }
+                        }
+                ),
+                make_tuple(
+                        "i",
+                        make_tuple("caption", "file", "Append an image"),
+                        [&](auto args) {
+                            auto read = terminal::read_name(args);
+                            if (read.epos >= args.size()) {
+                                article->add_frame(new ImageFrame(read.name));
+                            } else if (read.epos > 1) {
+                                auto i = new ImageFrame(read.name);
+                                read = terminal::read_name(args, read.epos);
+                                try {
+                                    i->set_file(fs::string_to_path(read.name));
+                                } catch (const std::runtime_error &e) {
+                                    cerr << e.what() << endl;
+                                    return CommandResult::EMPTY;
+                                }
+                                article->add_frame(i);
+                            } else {
+                                cerr << "lack parameter to image caption";
+                                return CommandResult::EMPTY;
+                            }
                             return CommandResult::SUCCESS;
                         }
                 ),
