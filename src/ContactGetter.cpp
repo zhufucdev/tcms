@@ -38,12 +38,12 @@ Contact *ContactGetter::get() const {
     return contact;
 }
 
-ConstantContactGetter::ConstantContactGetter(tcms::Contact *contact)
+MemoryContactGetter::MemoryContactGetter(tcms::Contact *contact)
         : contact(contact), ContactGetter(contact->get_id()) {
     cache[contact->get_id()] = contact;
     rc[contact->get_id()] = 1;
 }
 
-Contact *ConstantContactGetter::get() const {
+Contact *MemoryContactGetter::get() const {
     return contact;
 }

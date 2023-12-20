@@ -25,10 +25,10 @@ namespace tcms {
         virtual Contact *get() const;
     };
 
-    class ConstantContactGetter : public ContactGetter {
+    class MemoryContactGetter : public ContactGetter {
         Contact *contact;
     public:
-        explicit ConstantContactGetter(Contact *contact);
+        explicit MemoryContactGetter(Contact *contact);
 
         Contact * get() const override;
     };
