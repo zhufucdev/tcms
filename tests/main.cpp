@@ -2,6 +2,7 @@
 #include "TCMS.h"
 #include "test.h"
 #include "fs.h"
+#include "metadata.h"
 
 void test_language() {
     auto lang = Language::parse("zh_CN");
@@ -45,7 +46,22 @@ void test_fs_list_files() {
     test::assert_eq("fs_list_count", 5, count);
 }
 
+void test_metadata() {
+    tcms::Metadata metadata;
+    tcms::LanguageTag lang(Language::parse("zh_CN"));
+    tcms::ConstantContactGetter at(new tcms::Contact("John"));
+    at.get()->set_name(1, "Cena");
+
+    metadata.add_tag(new tcms::LanguageTag(lang));
+    metadata.add_tag(new tcms::AuthorTag(&at));
+    auto ba = metadata.serialize();
+    metadata = tcms::Metadata::deserialize(ba);
+    test::assert_eq("metadata_lang_tag", lang.to_string(), metadata.get_tags()[0]->to_string());
+    test::assert_eq("metadata_author_tag", at.get()->get_full_name(), metadata.get_tags()[1]->to_string());
+}
+
 int main() {
     test::run_tests({test_language, test_contact,
-                     test_fs_get_extension, test_fs_list_files});
+                     test_fs_get_extension, test_fs_list_files,
+                     test_metadata});
 }

@@ -1,7 +1,9 @@
 #include "ContactGetter.h"
-#include <fstream>
 
 using namespace tcms;
+
+std::map<id_type, size_t> ContactGetter::rc{};
+std::map<id_type, Contact *> ContactGetter::cache{};
 
 ContactGetter::ContactGetter(id_type id) : id(id) {}
 
@@ -14,7 +16,7 @@ ContactGetter::~ContactGetter() {
     }
 }
 
-fs::Path ContactGetter::get_path() const {
+fs::Path get_contact_path(id_type id) {
     return fs::Path{"metadata", std::to_string(id)};
 }
 
@@ -29,17 +31,20 @@ Contact *ContactGetter::get() const {
         // ignored
     }
 
-    auto ba = fs::read_file(get_path());
+    auto ba = fs::read_file(get_contact_path(id));
     auto contact = Contact::deserialize(ba);
     cache[id] = contact;
     rc[id] = 1;
     return contact;
 }
 
-ContactGetter ContactGetter::from_file(const fs::Path &path) {
-    std::ifstream ifs(fs::path_to_string(path));
-    char *buf = (char *) malloc(sizeof(id_type));
-    ifs.read(buf, sizeof(id_type));
-    auto id = bytes::read_number<id_type>(buf);
-    return ContactGetter(id);
+ConstantContactGetter::ConstantContactGetter(tcms::Contact *contact)
+        : contact(contact), ContactGetter(contact->get_id()) {}
+
+Contact *ConstantContactGetter::get() const {
+    return contact;
+}
+
+ConstantContactGetter::~ConstantContactGetter() {
+    delete contact;
 }

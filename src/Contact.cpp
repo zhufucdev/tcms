@@ -5,6 +5,10 @@ tcms::Contact::Contact(const std::string &first_name) : names{first_name}, id(in
 
 tcms::Contact::Contact(id_type id, const std::vector<std::string> &names) : id(id), names(names) {}
 
+id_type tcms::Contact::get_id() const {
+    return id;
+}
+
 const std::vector<std::string> &tcms::Contact::get_names() const {
     return names;
 }
@@ -45,8 +49,10 @@ tcms::Contact *tcms::Contact::deserialize(ByteArray ba) {
 
 void tcms::Contact::set_name(size_t index, const std::string &name) {
     if (names.size() < index + 1) {
-        names.push_back(name);
-    } else {
-        names[index] = name;
+        auto target = index - names.size() + 1;
+        for (int i = 0; i < target; ++i) {
+            names.emplace_back("");
+        }
     }
+    names[index] = name;
 }

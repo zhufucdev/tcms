@@ -16,6 +16,8 @@ namespace tcms {
     public:
         explicit Contact(const std::string &first_name);
 
+        id_type get_id() const;
+
         void set_name(size_t index, const std::string &name);
 
         const std::vector<std::string> &get_names() const;

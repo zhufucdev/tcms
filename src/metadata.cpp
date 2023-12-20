@@ -13,9 +13,9 @@ enum TagType {
 Tag *Tag::deserialize(ByteArray ba) {
     switch (ba.content[0]) {
         case TagType::Lang:
-            return LanguageTag::deserialize(ba + 1);
+            return LanguageTag::deserialize(ba);
         case TagType::Author:
-            return AuthorTag::deserialize(ba + 1);
+            return AuthorTag::deserialize(ba);
         default:
             throw std::runtime_error("Unknown type (deserializing Tag)");
     }
@@ -28,6 +28,7 @@ ByteArray tcms::LanguageTag::serialize() const {
     auto len = str.length() + 2;
     auto buf = (char *) calloc(len, sizeof(char));
     buf[0] = TagType::Lang;
+    std::memcpy(buf + 1, str.c_str(), str.length());
     return {buf, len};
 }
 
@@ -48,18 +49,20 @@ Language tcms::LanguageTag::get_language() const {
     return lang;
 }
 
-AuthorTag::AuthorTag(id_type author_id) : author(author_id), Tag() {}
+AuthorTag::AuthorTag(id_type author_id) : author(new ContactGetter(author_id)), Tag() {}
+
+AuthorTag::AuthorTag(tcms::ContactGetter *getter) : author(getter) {}
 
 Contact *tcms::AuthorTag::get_author() const {
-    return author.get();
+    return author->get();
 }
 
 std::string AuthorTag::to_string() const {
-    return author.get()->get_full_name();
+    return author->get()->get_full_name();
 }
 
 ByteArray AuthorTag::serialize() const {
-    auto cid = author.get_id();
+    auto cid = author->get_id();
     auto buf = (char *) malloc(sizeof(size_t) + 1);
     buf[0] = TagType::Author;
     bytes::write_number(buf + 1, cid);
@@ -74,9 +77,15 @@ AuthorTag *AuthorTag::deserialize(ByteArray ba) {
     return new AuthorTag(cid);
 }
 
-Metadata::Metadata(id_type id) : id(id) {}
+Metadata::Metadata(id_type id, const std::vector<Tag *> &tags) : id(id), tags(tags) {}
 
-Metadata::~Metadata() = default;
+Metadata::Metadata() : id(increment::get_next_id()), tags() {}
+
+Metadata::~Metadata() {
+    for (auto tag : tags) {
+        delete tag;
+    }
+}
 
 std::vector<Tag *> Metadata::get_tags() const {
     return tags;
@@ -110,9 +119,11 @@ Metadata tcms::Metadata::deserialize(ByteArray ba) {
     while (current_pos < ba.len) {
         auto curr_size = bytes::read_number<size_t>(ba.content + current_pos);
         tags.push_back(Tag::deserialize(ba + current_pos + sizeof(size_t)));
-        current_pos += curr_size;
+        current_pos += curr_size + sizeof(size_t);
     }
-    auto m = Metadata(id);
-    m.tags = tags;
-    return m;
+    return {id, tags};
+}
+
+void Metadata::add_tag(Tag *tag) {
+    tags.push_back(tag);
 }
