@@ -64,6 +64,14 @@ id_type FrameGetter::get_id() const {
     return id;
 }
 
+size_t FrameGetter::estimated_size() const {
+    std::ifstream ifs(fs::path_to_string(get_path(id)));
+    ifs.seekg(0, std::ifstream::end);
+    auto len = ifs.tellg();
+    ifs.close();
+    return len;
+}
+
 ByteArray FrameGetter::serialize() const {
     return get()->serialize();
 }

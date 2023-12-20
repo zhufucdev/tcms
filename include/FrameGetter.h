@@ -35,6 +35,8 @@ namespace tcms {
 
         ByteArray serialize() const override;
 
+        size_t estimated_size() const;
+
         static FrameGetter *from_file(id_type id);
 
         static fs::Path get_path(id_type id);

@@ -3,6 +3,7 @@
 #include "strings.h"
 #include "terminal.h"
 #include "find.h"
+#include "List.h"
 #include <iostream>
 #include <fstream>
 
@@ -214,12 +215,14 @@ void tcms::TCMS::event_loop() {
                 cmd,
                 make_tuple(
                         "ls",
-                        make_tuple("-l", "-t type", "pattern", "List (matching) articles, frames or contacts"),
+                        make_tuple("pattern", "-l", "-t type", "-m", "List matching articles, frames or contacts"),
                         [&](auto args, auto &os, auto &es) {
-                            for (auto a: articles) {
-                                os << a->get_name() << '\t';
-                            }
-                            cout << endl;
+                            auto read_f = terminal::read_flags(args);
+                            os << behavior::ListInRoot(
+                                    articles,
+                                    std::find(read_f.singles.begin(), read_f.singles.end(), 'l') != read_f.singles.end()
+                            );
+                            os << endl;
                             return CommandResult::SUCCESS;
                         }
                 ),
@@ -368,9 +371,11 @@ bool tcms::TCMS::change_work(tcms::Article *article) {
                         "ls",
                         make_tuple("-t type", "-l", "List frames (of specific type)"),
                         [&](auto args, auto &os, auto &es) {
-                            for (auto f: article->get_frames()) {
-                                os << f->get_id() << '\t';
-                            }
+                            auto read_f = terminal::read_flags(args);
+                            os << behavior::ListInArticle(
+                                    article,
+                                    std::find(read_f.singles.begin(), read_f.singles.end(), 'l') != read_f.singles.end()
+                            );
                             os << endl;
                             return CommandResult::SUCCESS;
                         }

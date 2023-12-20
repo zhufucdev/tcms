@@ -28,6 +28,8 @@ namespace tcms {
         bool delete_article(const std::string &name);
 
         Article *find_article(const std::string &name);
+
+
     };
 }
 
