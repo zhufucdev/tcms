@@ -20,7 +20,7 @@ std::vector<std::string> strings::split(const std::string &str, char separator) 
     int i, j;
     for (i = 0, j = 0; i < str.length(); i++) {
         if (str[i] == separator) {
-            buf.emplace_back(str.substr(j, i));
+            buf.emplace_back(str.substr(j, i - j));
             j = i + 1;
         }
     }
