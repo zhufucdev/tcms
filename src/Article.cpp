@@ -2,7 +2,7 @@
 
 using namespace tcms;
 
-Article::Article(id_type id, const std::string &name, const Metadata &metadata, const std::vector<FrameGetter> &frames)
+Article::Article(id_type id, const std::string &name, const Metadata &metadata, const std::vector<FrameGetter *> &frames)
         : id(id), name(name), frames(frames), metadata(metadata) {}
 
 Article::Article(const std::string &name) : name(name), id(increment::get_next_id()), frames(), metadata() {}
@@ -13,8 +13,12 @@ int Article::get_id() const {
     return id;
 }
 
-std::vector<FrameGetter> Article::get_frames() const {
+std::vector<FrameGetter*> Article::get_frames() const {
     return frames;
+}
+
+void Article::add_frame(tcms::Frame *frame) {
+    frames.push_back(new MemoryFrameGetter(frame));
 }
 
 Metadata &Article::get_metadata() {
@@ -30,7 +34,7 @@ ByteArray Article::serialize() const {
     bytes::write_number<size_t>(buf + ptr, frames.size());
     ptr += sizeof(size_t);
     for (const auto &frame: frames) {
-        bytes::write_number(buf + ptr, frame.get_id());
+        bytes::write_number(buf + ptr, frame->get_id());
         ptr += sizeof(id_type);
     }
     std::memcpy(buf + ptr, mba.content, mba.len);
@@ -46,7 +50,7 @@ Article *Article::deserialize(ByteArray ba) {
     std::string name(ba.content + sizeof(id_type), ba.content + ptr);
     ptr++;
     auto frame_count = bytes::read_number<size_t>(ba.content + ptr);
-    std::vector<FrameGetter> frames;
+    std::vector<FrameGetter *> frames;
     for (int i = 0; i < frame_count; i++) {
         auto fid = bytes::read_number<id_type>(ba.content + ptr);
         ptr += sizeof(id_type);

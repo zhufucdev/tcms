@@ -12,11 +12,11 @@ namespace tcms {
     private:
         std::string name;
         id_type id;
-        std::vector<FrameGetter> frames;
+        std::vector<FrameGetter *> frames;
         Metadata metadata;
 
         Article(id_type id, const std::string &name, const Metadata &metadata,
-                const std::vector<FrameGetter> &frames);
+                const std::vector<FrameGetter *> &frames);
 
     public:
 
@@ -26,7 +26,9 @@ namespace tcms {
 
         id_type get_id() const;
 
-        std::vector<FrameGetter> get_frames() const;
+        std::vector<FrameGetter *> get_frames() const;
+
+        void add_frame(Frame *frame);
 
         Metadata &get_metadata();
 
