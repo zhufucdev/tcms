@@ -4,6 +4,7 @@
 #include "terminal.h"
 #include "find.h"
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -41,9 +42,41 @@ enum CommandResult {
 };
 
 template<typename Handler>
+CommandResult command_pipelined(const vector<string> &args, const Handler &handler) {
+    int pip_pos;
+    bool append_mode;
+    for (pip_pos = 0; pip_pos < args.size(); ++pip_pos) {
+        if (args[pip_pos] == ">") {
+            append_mode = false;
+            break;
+        } else if (args[pip_pos] == ">>") {
+            append_mode = true;
+            break;
+        }
+    }
+    if (pip_pos >= args.size()) {
+        // not piped
+        return handler(args, cout, cerr);
+    } else if (pip_pos == args.size() - 1) {
+        cerr << "invalid pipeline syntax";
+        return CommandResult::EMPTY;
+    } else {
+        auto direction = terminal::read_name(args, pip_pos + 1);
+        if (direction.epos != args.size()) {
+            cerr << "warning: ignoring redundant parameters after pipeline direction" << endl;
+        }
+        ofstream ofs(direction.name, ofstream::out | (append_mode ? ofstream::app : ofstream::trunc));
+        vector<std::string> sliced_args(args.begin(), args.begin() + pip_pos);
+        auto res = handler(sliced_args, ofs, cerr);
+        ofs.close();
+        return res;
+    }
+}
+
+template<typename Handler>
 CommandResult handle_command(const vector<string> &args, const Handler &last_handler) {
     if (args[0] == get<0>(last_handler)) {
-        return get<2>(last_handler)(args);
+        return command_pipelined(args, get<2>(last_handler));
     } else {
         return CommandResult::NO_MATCH;
     }
@@ -54,7 +87,7 @@ CommandResult handle_command(const vector<string> args, const Handler &first_han
     if (args.empty()) {
         return CommandResult::EMPTY;
     } else if (get<0>(first_handler) == args[0]) {
-        return get<2>(first_handler)(args);
+        return command_pipelined(args, get<2>(first_handler));
     } else {
         return handle_command(args, handlers...);
     }
@@ -154,6 +187,17 @@ inline void default_command_result_handler(CommandResult res, const string &cmd)
     }
 }
 
+inline auto clear_command_handler() {
+    return make_tuple(
+            "clear",
+            make_tuple("Clear the screen"),
+            [](auto args, auto &os, auto &es) {
+                terminal::clear_screen();
+                return CommandResult::SUCCESS;
+            }
+    );
+}
+
 void tcms::TCMS::event_loop() {
     running = true;
     print_dialog("TCMS - The Content Management System", "Welcome to TCMS. Type ? for help.");
@@ -171,9 +215,9 @@ void tcms::TCMS::event_loop() {
                 make_tuple(
                         "ls",
                         make_tuple("-l", "-t type", "pattern", "List (matching) articles, frames or contacts"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             for (auto a: articles) {
-                                cout << a->get_name() << '\t';
+                                os << a->get_name() << '\t';
                             }
                             cout << endl;
                             return CommandResult::SUCCESS;
@@ -182,15 +226,15 @@ void tcms::TCMS::event_loop() {
                 make_tuple(
                         "touch",
                         make_tuple("name", "Create an article"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             if (args.size() < 2) {
-                                cout << "too few arguments" << endl;
+                                os << "too few arguments" << endl;
                                 return CommandResult::EMPTY;
                             }
                             auto read = terminal::read_name(args);
                             while (true) {
                                 if (!new_article(read.name)) {
-                                    cout << "duplicated name: " << args[1] << endl;
+                                    os << "duplicated name: " << args[1] << endl;
                                     return CommandResult::EMPTY;
                                 }
                                 if (read.epos >= args.size()) {
@@ -204,15 +248,15 @@ void tcms::TCMS::event_loop() {
                 make_tuple(
                         "rm",
                         make_tuple("name", "Delete an article"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             if (args.size() < 2) {
-                                cerr << "too few arguments" << endl;
+                                es << "too few arguments" << endl;
                                 return CommandResult::EMPTY;
                             }
                             auto read = terminal::read_name(args);
                             while (true) {
                                 if (!delete_article(read.name)) {
-                                    cerr << "no such article: " << read.name << endl;
+                                    es << "no such article: " << read.name << endl;
                                     return CommandResult::EMPTY;
                                 }
                                 if (read.epos >= args.size()) {
@@ -226,11 +270,15 @@ void tcms::TCMS::event_loop() {
                 make_tuple(
                         "cw",
                         make_tuple("name", "-t type", "Change the working target (of specific type)"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             auto read = terminal::read_name(args);
+                            if (read.epos == 1) {
+                                es << "lacking parameter to article name" << endl;
+                                return CommandResult::EMPTY;
+                            }
                             auto article = find_article(read.name);
                             if (article == nullptr) {
-                                cerr << "no such article: " << read.name << endl;
+                                es << "no such article: " << read.name << endl;
                                 return CommandResult::EMPTY;
                             } else {
                                 return change_work(article) ? CommandResult::SUCCESS : CommandResult::FAILURE;
@@ -240,27 +288,20 @@ void tcms::TCMS::event_loop() {
                 make_tuple(
                         "cat",
                         make_tuple("name", "-t type", "Print a target (of specific type)"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             auto read = terminal::read_name(args);
                             if (read.epos < args.size()) {
-                                cerr << "too many arguments" << endl;
+                                es << "too many arguments" << endl;
                                 return CommandResult::EMPTY;
                             }
                             return CommandResult::EMPTY;
                         }
                 ),
-                make_tuple(
-                        "clear",
-                        make_tuple("Clear the screen"),
-                        [](auto args) {
-                            terminal::clear_screen();
-                            return CommandResult::SUCCESS;
-                        }
-                ),
+                clear_command_handler(),
                 make_tuple(
                         "q",
                         make_tuple("Exit the program anyway"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             running = false;
                             return CommandResult::SUCCESS;
                         }
@@ -326,30 +367,30 @@ bool tcms::TCMS::change_work(tcms::Article *article) {
                 make_tuple(
                         "ls",
                         make_tuple("-t type", "-l", "List frames (of specific type)"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             for (auto f: article->get_frames()) {
-                                cout << f->get_id() << '\t';
+                                os << f->get_id() << '\t';
                             }
-                            cout << endl;
+                            os << endl;
                             return CommandResult::SUCCESS;
                         }
                 ),
                 make_tuple(
                         "h",
                         make_tuple("-d depth", "title...", "Append a title (with depth)"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             int depth = 1;
                             vector<string>::size_type offset = 1;
                             if (args[1] == "-d") {
                                 if (args.size() < 3) {
-                                    cerr << "lacking parameter to depth";
+                                    es << "lacking parameter to depth";
                                     return CommandResult::EMPTY;
                                 }
                                 depth = strings::parse_number<int>(args[2]);
                                 offset = 3;
                             }
                             if (args.size() <= offset) {
-                                cerr << "lack parameter to title content" << endl;
+                                es << "lack parameter to title content" << endl;
                                 return CommandResult::EMPTY;
                             }
 
@@ -360,9 +401,9 @@ bool tcms::TCMS::change_work(tcms::Article *article) {
                 make_tuple(
                         "p",
                         make_tuple("paragraph...", "Append a paragraph"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             if (args.size() < 2) {
-                                cerr << "lack parameter to paragraph content" << endl;
+                                es << "lack parameter to paragraph content" << endl;
                                 return CommandResult::EMPTY;
                             } else {
                                 article->add_frame(new ParagraphFrame(terminal::read_paragraph(args)));
@@ -373,7 +414,7 @@ bool tcms::TCMS::change_work(tcms::Article *article) {
                 make_tuple(
                         "i",
                         make_tuple("caption", "file", "Append an image"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             auto read = terminal::read_name(args);
                             if (read.epos >= args.size()) {
                                 article->add_frame(new ImageFrame(read.name));
@@ -383,12 +424,12 @@ bool tcms::TCMS::change_work(tcms::Article *article) {
                                 try {
                                     i->set_file(fs::string_to_path(read.name));
                                 } catch (const std::runtime_error &e) {
-                                    cerr << e.what() << endl;
+                                    es << e.what() << endl;
                                     return CommandResult::EMPTY;
                                 }
                                 article->add_frame(i);
                             } else {
-                                cerr << "lack parameter to image caption";
+                                es << "lack parameter to image caption";
                                 return CommandResult::EMPTY;
                             }
                             return CommandResult::SUCCESS;
@@ -397,34 +438,35 @@ bool tcms::TCMS::change_work(tcms::Article *article) {
                 make_tuple(
                         "cat",
                         make_tuple("name", "Print a frame"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             auto read = terminal::read_name(args);
                             if (read.epos < args.size() - 1) {
-                                cerr << "too many arguments" << endl;
+                                es << "too many arguments" << endl;
                                 return CommandResult::EMPTY;
                             } else {
                                 auto id = strings::parse_number<id_type>(read.name);
                                 auto frames = article->get_frames();
                                 auto frame = find::by_id<FrameGetter *>(frames.begin(), frames.end(), id);
                                 if (frame == nullptr) {
-                                    cerr << "no such frame: " << read.name << endl;
+                                    es << "no such frame: " << read.name << endl;
                                     return CommandResult::EMPTY;
                                 } else {
                                     try {
-                                        cout << frame->get()->to_string() << endl;
+                                        os << frame->get()->to_string() << endl;
                                         return CommandResult::SUCCESS;
                                     } catch (const std::exception &e) {
-                                        cerr << "Error while reading frame: " << e.what() << endl;
+                                        es << "Error while reading frame: " << e.what() << endl;
                                         return CommandResult::EMPTY;
                                     }
                                 }
                             }
                         }
                 ),
+                clear_command_handler(),
                 make_tuple(
                         "q",
                         make_tuple("Stop working on this article"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             working = false;
                             return CommandResult::SUCCESS;
                         }
@@ -432,7 +474,7 @@ bool tcms::TCMS::change_work(tcms::Article *article) {
                 make_tuple(
                         "q!",
                         make_tuple("Exit the program anyway"),
-                        [&](auto args) {
+                        [&](auto args, auto &os, auto &es) {
                             running = false;
                             return CommandResult::SUCCESS;
                         }

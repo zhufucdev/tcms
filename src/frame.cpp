@@ -129,7 +129,7 @@ ImageFrame *ImageFrame::deserialize(ByteArray ba) {
     if (sa.size() != 2) {
         throw std::runtime_error("invalid data (deserializing ImageFrame)");
     }
-    ImageFrame *frame = new ImageFrame{id, sa[0]};
+    auto *frame = new ImageFrame{id, sa[0]};
     frame->extension = sa[1];
     return frame;
 }
