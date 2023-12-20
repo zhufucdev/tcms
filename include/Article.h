@@ -39,6 +39,8 @@ namespace tcms {
         ByteArray serialize() const override;
 
         static Article *deserialize(ByteArray ba);
+
+        bool operator==(const Article &a);
     };
 }
 #endif //TCMS_ARTICLE_H

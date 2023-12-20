@@ -69,3 +69,6 @@ Article *Article::deserialize(ByteArray ba) {
     return article;
 }
 
+bool Article::operator==(const tcms::Article &a) {
+    return id == a.id;
+}
