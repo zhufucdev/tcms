@@ -65,6 +65,7 @@ void test_terminal() {
     test::assert_eq("terminal_read_name_1", "lore ipsum", read.name);
     read = terminal::read_name({"touc\\", "lor"}, 0);
     test::assert_eq("terminal_read_name_2", "touc lor", read.name);
+    test::assert_eq("terminal_read_para", "you are nerd", terminal::read_paragraph({"you", "are", "nerd"}, 0));
 }
 
 int main() {

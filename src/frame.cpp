@@ -35,9 +35,9 @@ ByteArray TitleFrame::serialize() const {
     size_t len = sizeof(id_type) + sizeof(depth) + content.length() + 2;
     char *buf = (char *) calloc(len, sizeof(char));
     buf[0] = FrameType::TITLE;
-    bytes::write_number(buf + 1, len);
+    bytes::write_number(buf + 1, id);
     bytes::write_number(buf + 1 + sizeof(id_type), depth);
-    std::memcpy(buf + 1 + sizeof(id_type) + sizeof(char), content.c_str(), content.length());
+    std::memcpy(buf + 1 + sizeof(id_type) + sizeof(depth), content.c_str(), content.length());
     return {buf, len};
 }
 
@@ -46,8 +46,8 @@ TitleFrame *TitleFrame::deserialize(ByteArray ba) {
         throw std::runtime_error("unexpected header (deserializing TitleFrame)");
     }
     auto id = bytes::read_number<id_type>(ba.content + 1);
-    auto depth = bytes::read_number<int>(ba.content + 1 + sizeof(id_type));
-    auto content = (ba + 1 + sizeof(id_type) + sizeof(int)).content;
+    auto depth = bytes::read_number<unsigned char>(ba.content + 1 + sizeof(id_type));
+    auto content = (ba + 1 + sizeof(id_type) + sizeof(unsigned char)).content;
     return new TitleFrame{id, content, depth};
 }
 

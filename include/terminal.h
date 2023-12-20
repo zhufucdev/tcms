@@ -15,6 +15,8 @@ namespace terminal {
     void clear_screen();
 
     ReadName read_name(const std::vector<std::string>& args, str_vec_size_t offset = 1);
+
+    std::string read_paragraph(const std::vector<std::string>& args, str_vec_size_t offset = 1);
 }
 
 #endif //TCMS_TERMINAL_H

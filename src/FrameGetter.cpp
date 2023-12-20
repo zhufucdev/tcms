@@ -29,10 +29,13 @@ Frame *FrameGetter::get() const {
     switch (type) {
         case FrameType::TITLE:
             frame = TitleFrame::deserialize(ba);
+            break;
         case FrameType::PARAGRAPH:
             frame = ParagraphFrame::deserialize(ba);
+            break;
         case FrameType::IMAGE:
             frame = ImageFrame::deserialize(ba);
+            break;
         default:
             throw std::runtime_error("unknown frame type");
     }
@@ -52,7 +55,7 @@ id_type FrameGetter::get_id() const {
 FrameGetter *FrameGetter::from_file(id_type id) {
     std::ifstream ifs(fs::path_to_string(Frame::get_path(id)));
     char type;
-    ifs >> type;
+    ifs.read(&type, 1);
     ifs.close();
     return new FrameGetter{id, (FrameType) type};
 }

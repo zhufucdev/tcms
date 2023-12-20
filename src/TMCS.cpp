@@ -2,6 +2,7 @@
 #include "fs.h"
 #include "strings.h"
 #include "terminal.h"
+#include "find.h"
 #include <iostream>
 
 using namespace std;
@@ -138,11 +139,26 @@ void print_dialog(const string &title, const string &body, int padding = 2) {
     cout << endl;
 }
 
+inline void default_command_result_handler(CommandResult res, const string &cmd) {
+    switch (res) {
+        case CommandResult::FAILURE:
+            cerr << "Command failed silently." << endl;
+            break;
+        case CommandResult::NO_MATCH:
+            cerr << "Unknown command: " << cmd << endl;
+            break;
+        case CommandResult::EMPTY:
+        case CommandResult::SUCCESS:
+            break;
+    }
+}
+
 void tcms::TCMS::event_loop() {
     running = true;
-    print_dialog("TCMS - The Content Management System", "Welcome to TCMS. Type ? for help");
+    print_dialog("TCMS - The Content Management System", "Welcome to TCMS. Type ? for help.");
     while (running) {
         if (cin.eof()) {
+            running = false;
             break;
         }
         cout << "tcms> ";
@@ -153,7 +169,7 @@ void tcms::TCMS::event_loop() {
                 cmd,
                 make_tuple(
                         "ls",
-                        make_tuple("-l", "pattern", "List (matching) articles"),
+                        make_tuple("-l", "-t type", "pattern", "List (matching) articles, frames or contacts"),
                         [&](auto args) {
                             for (auto a: articles) {
                                 cout << a->get_name() << '\t';
@@ -166,32 +182,70 @@ void tcms::TCMS::event_loop() {
                         "touch",
                         make_tuple("name", "Create an article"),
                         [&](auto args) {
-                            if (args.size() != 2) {
-                                cout << "Invalid arguments." << endl;
+                            if (args.size() < 2) {
+                                cout << "too few arguments" << endl;
                                 return CommandResult::EMPTY;
                             }
-                            if (new_article(args[1])) {
-                                return CommandResult::SUCCESS;
-                            } else {
-                                cout << "duplicated name: " << args[1] << endl;
-                                return CommandResult::EMPTY;
+                            auto read = terminal::read_name(args);
+                            while (true) {
+                                if (!new_article(read.name)) {
+                                    cout << "duplicated name: " << args[1] << endl;
+                                    return CommandResult::EMPTY;
+                                }
+                                if (read.epos >= args.size()) {
+                                    break;
+                                }
+                                read = terminal::read_name(args, read.epos);
                             }
+                            return CommandResult::SUCCESS;
                         }
                 ),
                 make_tuple(
                         "rm",
                         make_tuple("name", "Delete an article"),
                         [&](auto args) {
-                            if (args.size() != 2) {
-                                cout << "invalid arguments." << endl;
+                            if (args.size() < 2) {
+                                cerr << "too few arguments" << endl;
                                 return CommandResult::EMPTY;
                             }
-                            if (delete_article(args[1])) {
-                                return CommandResult::SUCCESS;
+                            auto read = terminal::read_name(args);
+                            while (true) {
+                                if (!delete_article(read.name)) {
+                                    cerr << "no such article: " << read.name << endl;
+                                    return CommandResult::EMPTY;
+                                }
+                                if (read.epos >= args.size()) {
+                                    break;
+                                }
+                                read = terminal::read_name(args, read.epos);
+                            }
+                            return CommandResult::SUCCESS;
+                        }
+                ),
+                make_tuple(
+                        "cw",
+                        make_tuple("name", "-t type", "Change the working target (of specific type)"),
+                        [&](auto args) {
+                            auto read = terminal::read_name(args);
+                            auto article = find_article(read.name);
+                            if (article == nullptr) {
+                                cerr << "no such article: " << read.name << endl;
+                                return CommandResult::EMPTY;
                             } else {
-                                cout << "no such article: " << args[1] << endl;
+                                return change_work(article) ? CommandResult::SUCCESS : CommandResult::FAILURE;
+                            }
+                        }
+                ),
+                make_tuple(
+                        "cat",
+                        make_tuple("name", "-t type", "Print a target (of specific type)"),
+                        [&](auto args) {
+                            auto read = terminal::read_name(args);
+                            if (read.epos < args.size()) {
+                                cerr << "too many arguments" << endl;
                                 return CommandResult::EMPTY;
                             }
+                            return CommandResult::EMPTY;
                         }
                 ),
                 make_tuple(
@@ -203,7 +257,7 @@ void tcms::TCMS::event_loop() {
                         }
                 ),
                 make_tuple(
-                        "quit",
+                        "q",
                         make_tuple("Exit the program anyway"),
                         [&](auto args) {
                             running = false;
@@ -211,17 +265,7 @@ void tcms::TCMS::event_loop() {
                         }
                 )
         );
-        switch (res) {
-            case CommandResult::FAILURE:
-                cerr << "Command failed silently." << endl;
-                break;
-            case CommandResult::NO_MATCH:
-                cerr << "Unknown command: " << cmd << endl;
-                break;
-            case CommandResult::EMPTY:
-            case CommandResult::SUCCESS:
-                break;
-        }
+        default_command_result_handler(res, cmd);
     }
 }
 
@@ -260,4 +304,112 @@ bool tcms::TCMS::delete_article(const std::string &name) {
         delete target;
         return true;
     }
+}
+
+bool tcms::TCMS::change_work(tcms::Article *article) {
+    cout << "\n\n";
+    print_dialog(article->get_name(), "Working on this article. Type ? for help.");
+    cout << "\n";
+    auto working = true;
+    auto header = strings::truncate(article->get_name());
+    while (running && working) {
+        if (cin.eof()) {
+            running = false;
+            break;
+        }
+        cout << header << "> ";
+        string cmd;
+        getline(cin, cmd);
+        auto res = handle_command(
+                cmd,
+                make_tuple(
+                        "ls",
+                        make_tuple("-t type", "-l", "List frames (of specific type)"),
+                        [&](auto args) {
+                            for (auto f: article->get_frames()) {
+                                cout << f->get_id() << '\t';
+                            }
+                            cout << endl;
+                            return CommandResult::SUCCESS;
+                        }
+                ),
+                make_tuple(
+                        "h",
+                        make_tuple("-d depth", "title...", "Append a title (with depth)"),
+                        [&](auto args) {
+                            int depth = 1;
+                            vector<string>::size_type offset = 1;
+                            if (args[1] == "-d") {
+                                if (args.size() < 3) {
+                                    cerr << "lacking parameter to depth";
+                                    return CommandResult::EMPTY;
+                                }
+                                depth = strings::parse_number<int>(args[2]);
+                                offset = 3;
+                            }
+                            if (args.size() <= offset) {
+                                cerr << "lack argument to title content" << endl;
+                                return CommandResult::EMPTY;
+                            }
+
+                            article->add_frame(new TitleFrame(terminal::read_paragraph(args, offset), depth));
+                            return CommandResult::SUCCESS;
+                        }
+                ),
+                make_tuple(
+                        "cat",
+                        make_tuple("name", "Print a frame"),
+                        [&](auto args) {
+                            auto read = terminal::read_name(args);
+                            if (read.epos < args.size() - 1) {
+                                cerr << "too many arguments" << endl;
+                                return CommandResult::EMPTY;
+                            } else {
+                                auto id = strings::parse_number<id_type>(read.name);
+                                auto frames = article->get_frames();
+                                auto frame = find::by_id<FrameGetter *>(frames.begin(), frames.end(), id);
+                                if (frame == nullptr) {
+                                    cerr << "no such frame: " << read.name << endl;
+                                    return CommandResult::EMPTY;
+                                } else {
+                                    try {
+                                        cout << frame->get()->to_string() << endl;
+                                        return CommandResult::SUCCESS;
+                                    } catch (const std::exception &e) {
+                                        cerr << "Error while reading frame: " << e.what() << endl;
+                                        return CommandResult::EMPTY;
+                                    }
+                                }
+                            }
+                        }
+                ),
+                make_tuple(
+                        "q",
+                        make_tuple("Stop working on this article"),
+                        [&](auto args) {
+                            working = false;
+                            return CommandResult::SUCCESS;
+                        }
+                ),
+                make_tuple(
+                        "q!",
+                        make_tuple("Exit the program anyway"),
+                        [&](auto args) {
+                            running = false;
+                            return CommandResult::SUCCESS;
+                        }
+                )
+        );
+
+        default_command_result_handler(res, cmd);
+    }
+    return true;
+}
+
+bool tcms::TCMS::change_work(tcms::Frame *frame) {
+    return false;
+}
+
+bool tcms::TCMS::change_work(tcms::Contact *contact) {
+    return false;
 }

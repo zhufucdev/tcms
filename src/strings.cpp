@@ -29,3 +29,23 @@ std::vector<std::string> strings::split(const std::string &str, char separator) 
     }
     return buf;
 }
+
+std::string
+strings::join(std::vector<std::string>::const_iterator first, std::vector<std::string>::const_iterator last,
+              char separator) {
+    std::string str;
+    while (first != last) {
+        str += *first;
+        str += separator;
+        first++;
+    }
+    return std::string{str.c_str(), str.length() - 1};
+}
+
+std::string strings::truncate(const std::string &str, std::string::size_type cut) {
+    if (str.length() > cut) {
+        return str.substr(0, cut - 1) + "…";
+    } else {
+        return str;
+    }
+}

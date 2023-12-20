@@ -7,6 +7,13 @@ namespace tcms {
     class TCMS {
         bool running;
         std::vector<Article *> articles;
+
+        bool change_work(Article *article);
+
+        bool change_work(Frame *frame);
+
+        bool change_work(Contact *contact);
+
     public:
         TCMS();
 

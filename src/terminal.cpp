@@ -1,4 +1,5 @@
 #include "terminal.h"
+#include "strings.h"
 #include <iostream>
 
 #if _WIN32
@@ -23,8 +24,11 @@ void terminal::clear_screen() {
 
 #endif
 
-terminal::ReadName terminal::read_name(const std::vector<std::string>& args, terminal::str_vec_size_t offset) {
+terminal::ReadName terminal::read_name(const std::vector<std::string> &args, terminal::str_vec_size_t offset) {
     str_vec_size_t i = offset;
+    if (i >= args.size()) {
+        return {i, ""};
+    }
     std::string name;
     while (true) {
         name += args[i];
@@ -34,5 +38,9 @@ terminal::ReadName terminal::read_name(const std::vector<std::string>& args, ter
         name = name.substr(0, name.length() - 1) + " ";
         i++;
     }
-    return {i, name};
+    return {i + 1, name};
+}
+
+std::string terminal::read_paragraph(const std::vector<std::string> &args, terminal::str_vec_size_t offset) {
+    return strings::join(args.begin() + offset, args.end(), ' ');
 }

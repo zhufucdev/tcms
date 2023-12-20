@@ -35,7 +35,7 @@ namespace tcms {
     class TitleFrame : public Frame {
     private:
         id_type id;
-        int depth;
+        unsigned char depth;
         std::string content;
 
         TitleFrame(id_type id, const std::string &content, int depth);
