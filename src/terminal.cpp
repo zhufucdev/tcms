@@ -53,18 +53,29 @@ inline bool is_flag(const std::string &arg) {
 }
 
 ReadFlags terminal::read_flags(const std::vector<std::string> &args, str_vec_size_t offset) {
-    std::string singles;
+    std::map<char, bool> singles;
     std::map<char, std::string> parameters;
-    for (int i = 0; i < args.size(); ++i) {
-        if (is_flag(args[i])) {
-            if (args[i].length() == 2 && i != args.size() - 1 && !is_flag(args[i + 1])) {
-                parameters[args[i][1]] = args[i + 1];
-            } else {
-                for (auto c : args[i]) {
-                    singles += c;
+    auto read_n = read_name(args, offset);
+    while (true) {
+        if (is_flag(read_n.name)) {
+            if (read_n.name.length() == 2 && read_n.epos < args.size()) {
+                auto flag = read_n.name[1];
+                read_n = read_name(args, read_n.epos);
+                if (!is_flag(read_n.name)) {
+                    parameters[flag] = read_n.name;
+                    continue;
+                } else {
+                    read_n.name = std::string{'-', flag};
                 }
             }
+            for (auto c: read_n.name.substr(1)) {
+                singles[c] = true;
+            }
         }
+        if (read_n.epos >= args.size()) {
+            break;
+        }
+        read_n = read_name(args, read_n.epos);
     }
     return {singles, parameters};
 }

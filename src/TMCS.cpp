@@ -220,7 +220,7 @@ void tcms::TCMS::event_loop() {
                             auto read_f = terminal::read_flags(args);
                             os << behavior::ListInRoot(
                                     articles,
-                                    std::find(read_f.singles.begin(), read_f.singles.end(), 'l') != read_f.singles.end()
+                                    read_f.singles.find('l') != read_f.singles.end()
                             );
                             os << endl;
                             return CommandResult::SUCCESS;
@@ -374,7 +374,7 @@ bool tcms::TCMS::change_work(tcms::Article *article) {
                             auto read_f = terminal::read_flags(args);
                             os << behavior::ListInArticle(
                                     article,
-                                    std::find(read_f.singles.begin(), read_f.singles.end(), 'l') != read_f.singles.end()
+                                    read_f.singles.find('l') != read_f.singles.end()
                             );
                             os << endl;
                             return CommandResult::SUCCESS;

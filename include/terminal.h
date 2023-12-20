@@ -14,7 +14,7 @@ namespace terminal {
     };
 
     struct ReadFlags {
-        std::string singles;
+        std::map<char, bool> singles;
         std::map<char, std::string> parameters;
     };
 
