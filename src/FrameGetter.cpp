@@ -53,10 +53,25 @@ id_type FrameGetter::get_id() const {
     return id;
 }
 
-FrameGetter FrameGetter::from_file(id_type id) {
+FrameGetter *FrameGetter::from_file(id_type id) {
     std::ifstream ifs(fs::path_to_string(get_frame_path(id)));
     char type;
     ifs >> type;
     ifs.close();
-    return {id, (FrameType) type};
+    return new FrameGetter{id, (FrameType) type};
+}
+
+MemoryFrameGetter::MemoryFrameGetter(tcms::Frame *frame) :
+        frame(frame), FrameGetter(frame->get_id(), frame->get_type()) {
+    auto id = frame->get_id();
+    cache[id] = frame;
+    if (rc.count(id)) {
+        rc[id]++;
+    } else {
+        rc[id] = 1;
+    }
+}
+
+Frame *MemoryFrameGetter::get() const {
+    return frame;
 }

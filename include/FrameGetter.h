@@ -13,6 +13,8 @@ namespace tcms {
     class FrameGetter {
         id_type id;
         FrameType type;
+
+    protected:
         static std::map<id_type, Frame *> cache;
         static std::map<id_type, size_t> rc;
 
@@ -21,13 +23,21 @@ namespace tcms {
 
         ~FrameGetter();
 
-        Frame *get() const;
+        virtual Frame *get() const;
 
         FrameType get_type() const;
 
         id_type get_id() const;
 
-        static FrameGetter from_file(id_type id);
+        static FrameGetter *from_file(id_type id);
+    };
+
+    class MemoryFrameGetter : public FrameGetter {
+        Frame *frame;
+    public:
+        explicit MemoryFrameGetter(Frame *frame);
+
+        Frame *get() const override;
     };
 }
 
