@@ -237,6 +237,10 @@ ByteArray fs::read_file(const Path &src) {
     return {buf, len};
 }
 
+bool fs::remove_file(const fs::Path &path) {
+    return std::remove(path_to_string(path).c_str()) == 0;
+}
+
 bool fs::is_hidden(const Path &path) {
     auto name = get_name(path);
     if (name.empty()) {

@@ -28,6 +28,8 @@ namespace fs {
 
     ByteArray read_file(const Path &src);
 
+    bool remove_file(const Path &path);
+
     typedef std::iterator<std::input_iterator_tag, Path, int, const fs::Path *, Path> FileIterator;
 
     template<class Iterator>
