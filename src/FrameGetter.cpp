@@ -53,7 +53,7 @@ id_type FrameGetter::get_id() const {
     return id;
 }
 
-FrameGetter *FrameGetter::from_file(const fs::Path &path) {
+FrameGetter FrameGetter::from_file(const fs::Path &path) {
     std::ifstream ifs(fs::path_to_string(path));
     char type;
     ifs >> type;
@@ -61,6 +61,6 @@ FrameGetter *FrameGetter::from_file(const fs::Path &path) {
     ifs.read(buf, sizeof(id_type));
     auto id = bytes::read_number<id_type>(buf);
     ifs.close();
-    return new FrameGetter(id, (FrameType) type);
+    return {id, (FrameType) type};
 }
 

@@ -10,8 +10,10 @@
 namespace tcms {
     class ContactGetter {
         id_type id;
-        static std::map<id_type, Contact> cache;
+        static std::map<id_type, Contact *> cache;
         static std::map<id_type, size_t> rc;
+
+        fs::Path get_path() const;
 
     public:
         explicit ContactGetter(id_type id);
@@ -20,7 +22,9 @@ namespace tcms {
 
         id_type get_id() const;
 
-        static ContactGetter *from_file(const fs::Path &path);
+        Contact *get();
+
+        static ContactGetter from_file(const fs::Path &path);
     };
 }
 
