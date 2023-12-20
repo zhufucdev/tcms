@@ -40,7 +40,7 @@ namespace tcms {
 
         static Article *deserialize(ByteArray ba);
 
-        bool operator==(const Article &a);
+        bool operator==(const Article &a) const;
     };
 }
 #endif //TCMS_ARTICLE_H

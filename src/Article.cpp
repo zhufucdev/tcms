@@ -25,6 +25,8 @@ std::vector<FrameGetter*> Article::get_frames() const {
 
 void Article::add_frame(tcms::Frame *frame) {
     frames.push_back(new MemoryFrameGetter(frame));
+    frame->write_to_file();
+    this->write_to_file();
 }
 
 Metadata &Article::get_metadata() {
@@ -58,6 +60,7 @@ Article *Article::deserialize(ByteArray ba) {
     std::string name(ba.content + sizeof(id_type), ba.content + ptr);
     ptr++;
     auto frame_count = bytes::read_number<size_t>(ba.content + ptr);
+    ptr += sizeof(size_t);
     std::vector<FrameGetter *> frames;
     for (int i = 0; i < frame_count; i++) {
         auto fid = bytes::read_number<id_type>(ba.content + ptr);
@@ -69,6 +72,6 @@ Article *Article::deserialize(ByteArray ba) {
     return article;
 }
 
-bool Article::operator==(const tcms::Article &a) {
+bool Article::operator==(const tcms::Article &a) const {
     return id == a.id;
 }
