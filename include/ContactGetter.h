@@ -10,6 +10,8 @@
 namespace tcms {
     class ContactGetter {
         id_type id;
+
+    protected:
         static std::map<id_type, Contact *> cache;
         static std::map<id_type, size_t> rc;
 
@@ -27,8 +29,6 @@ namespace tcms {
         Contact *contact;
     public:
         explicit ConstantContactGetter(Contact *contact);
-
-        ~ConstantContactGetter();
 
         Contact * get() const override;
     };

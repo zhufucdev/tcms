@@ -34,7 +34,7 @@ namespace tcms {
     public:
         explicit AuthorTag(id_type author_id);
 
-        AuthorTag(ContactGetter *getter);
+        explicit AuthorTag(ContactGetter *getter);
 
         ~AuthorTag() override = default;
 

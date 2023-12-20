@@ -10,11 +10,17 @@
 namespace tcms {
     class Article : public bytes::BinarySerializable {
     private:
+        std::string name;
         id_type id;
         std::vector<FrameGetter> frames;
         Metadata metadata;
+
+        Article(id_type id, const std::string &name, const Metadata &metadata,
+                const std::vector<FrameGetter> &frames);
+
     public:
-        explicit Article(id_type id, const Metadata &metadata, const std::vector<FrameGetter> &frames);
+
+        Article(const std::string &name);
 
         ~Article();
 

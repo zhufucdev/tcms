@@ -2,8 +2,10 @@
 
 using namespace tcms;
 
-Article::Article(id_type id, const Metadata &metadata, const std::vector<FrameGetter> &frames)
-        : id(id), frames(frames), metadata(metadata) {}
+Article::Article(id_type id, const std::string &name, const Metadata &metadata, const std::vector<FrameGetter> &frames)
+        : id(id), name(name), frames(frames), metadata(metadata) {}
+
+Article::Article(const std::string &name) : name(name), id(increment::get_next_id()), frames(), metadata() {}
 
 Article::~Article() = default;
 
@@ -40,6 +42,9 @@ Article *Article::deserialize(ByteArray ba) {
     size_t ptr = sizeof(id_type);
     auto id = bytes::read_number<id_type>(ba.content);
     increment::add_id(id);
+    for (; ba.content[ptr] != 0 && ptr < ba.len; ptr++);
+    std::string name(ba.content + sizeof(id_type), ba.content + ptr);
+    ptr++;
     auto frame_count = bytes::read_number<size_t>(ba.content + ptr);
     std::vector<FrameGetter> frames;
     for (int i = 0; i < frame_count; i++) {
@@ -48,7 +53,7 @@ Article *Article::deserialize(ByteArray ba) {
         frames.push_back(FrameGetter::from_file(fid));
     }
     auto metadata = Metadata::deserialize(ba - ptr);
-    auto article = new Article(id, metadata, frames);
+    auto article = new Article(id, name, metadata, frames);
     return article;
 }
 

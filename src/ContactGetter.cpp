@@ -39,12 +39,11 @@ Contact *ContactGetter::get() const {
 }
 
 ConstantContactGetter::ConstantContactGetter(tcms::Contact *contact)
-        : contact(contact), ContactGetter(contact->get_id()) {}
+        : contact(contact), ContactGetter(contact->get_id()) {
+    cache[contact->get_id()] = contact;
+    rc[contact->get_id()] = 1;
+}
 
 Contact *ConstantContactGetter::get() const {
     return contact;
-}
-
-ConstantContactGetter::~ConstantContactGetter() {
-    delete contact;
 }
