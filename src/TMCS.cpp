@@ -144,7 +144,7 @@ void tcms::TCMS::event_loop() {
                         "ls",
                         make_tuple("pattern", "List (matching) articles"),
                         [](auto args) {
-
+                            args[1]
                             return CommandResult::SUCCESS;
                         }
                 ),
