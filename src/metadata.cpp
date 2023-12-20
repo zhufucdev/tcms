@@ -1,6 +1,6 @@
 #include "metadata.h"
-#include"language.h"
-#include"Contact.h"
+#include "language.h"
+#include "Contact.h"
 
 using namespace tcms;
 
@@ -77,30 +77,30 @@ AuthorTag *AuthorTag::deserialize(ByteArray ba) {
     return new AuthorTag(cid);
 }
 
-Metadata::Metadata(const std::vector<Tag *> &tags) : tags(tags) {}
+Metadata::Metadata(const std::vector<std::shared_ptr<Tag>> &tags) : tags(tags) {}
 
 Metadata::Metadata() : tags() {}
 
-Metadata::~Metadata() {
-    for (auto tag: tags) {
-        delete tag;
-    }
-}
+Metadata::~Metadata() = default;
 
 std::vector<Tag *> Metadata::get_tags() const {
-    return tags;
+    auto r = std::vector<Tag *>(tags.size());
+    for (int i = 0; i < tags.size(); ++i) {
+        r[i] = tags[i].get();
+    }
+    return r;
 }
 
 ByteArray tcms::Metadata::serialize() const {
     auto *serializedTags = new ByteArray[tags.size()];
     size_t totalTagSize = 0;
     for (size_t i = 0; i < tags.size(); ++i) {
-        serializedTags[i] = tags[i]->serialize();
+        serializedTags[i] = (*tags[i]).serialize();
         totalTagSize += serializedTags[i].len;
     }
     size_t len = totalTagSize + sizeof(size_t) * tags.size();
     char *buf = (char *) calloc(len, sizeof(char));
-    size_t currentPos = sizeof(id_type);
+    size_t currentPos = 0;
     for (size_t i = 0; i < tags.size(); ++i) {
         bytes::write_number(buf + currentPos, serializedTags[i].len);
         std::memcpy(buf + currentPos + sizeof(size_t), serializedTags[i].content, serializedTags[i].len);
@@ -112,16 +112,17 @@ ByteArray tcms::Metadata::serialize() const {
 }
 
 Metadata tcms::Metadata::deserialize(ByteArray ba) {
-    std::vector<Tag *> tags;
+    std::vector<std::shared_ptr<Tag>> tags;
     size_t current_pos = 0;
     while (current_pos < ba.len) {
         auto curr_size = bytes::read_number<size_t>(ba.content + current_pos);
-        tags.push_back(Tag::deserialize(ba + current_pos + sizeof(size_t)));
+        auto sp = std::shared_ptr<Tag>(Tag::deserialize(ba + current_pos + sizeof(size_t)));
+        tags.push_back(sp);
         current_pos += curr_size + sizeof(size_t);
     }
-    return {tags};
+    return Metadata(tags);
 }
 
 void Metadata::add_tag(Tag *tag) {
-    tags.push_back(tag);
+    tags.push_back(std::shared_ptr<Tag>(tag));
 }

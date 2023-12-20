@@ -4,6 +4,7 @@
 #include <string>
 #include "language.h"
 #include "ContactGetter.h"
+#include <memory>
 
 namespace tcms {
     class Tag : public bytes::BinarySerializable {
@@ -48,9 +49,9 @@ namespace tcms {
     };
 
     class Metadata : bytes::BinarySerializable {
-        std::vector<Tag *> tags;
+        std::vector<std::shared_ptr<Tag>> tags;
 
-        Metadata(const std::vector<Tag *> &tags);
+        explicit Metadata(const std::vector<std::shared_ptr<Tag>> &tags);
 
     public:
         Metadata();
