@@ -2,6 +2,7 @@
 #include "test.h"
 #include "fs.h"
 #include "metadata.h"
+#include "terminal.h"
 
 void test_language() {
     auto lang = Language::parse("zh_CN");
@@ -59,8 +60,15 @@ void test_metadata() {
     test::assert_eq("metadata_author_tag", author.get_full_name(), metadata.get_tags()[1]->to_string());
 }
 
+void test_terminal() {
+    auto read = terminal::read_name({"lore\\", "ipsum", "hinc"}, 0);
+    test::assert_eq("terminal_read_name_1", "lore ipsum", read.name);
+    read = terminal::read_name({"touc\\", "lor"}, 0);
+    test::assert_eq("terminal_read_name_2", "touc lor", read.name);
+}
+
 int main() {
     test::run_tests({test_language, test_contact,
                      test_fs_get_extension, test_fs_list_files,
-                     test_metadata});
+                     test_metadata, test_terminal});
 }

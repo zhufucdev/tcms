@@ -22,3 +22,17 @@ void terminal::clear_screen() {
 }
 
 #endif
+
+terminal::ReadName terminal::read_name(const std::vector<std::string>& args, terminal::str_vec_size_t offset) {
+    str_vec_size_t i = offset;
+    std::string name;
+    while (true) {
+        name += args[i];
+        if (args[i][args[i].length() - 1] != '\\' || i >= args.size()) {
+            break;
+        }
+        name = name.substr(0, name.length() - 1) + " ";
+        i++;
+    }
+    return {i, name};
+}
