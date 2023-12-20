@@ -1,4 +1,4 @@
-#include "tcms.h"
+#include "TCMS.h"
 #include "fs.h"
 #include "strings.h"
 #include <iostream>
@@ -9,7 +9,7 @@ tcms::TCMS::TCMS() : running(false), articles() {
     fs::create_directory("content");
     fs::create_directory("metadata");
     fs::create_directory("frames");
-    fs::create_directory("metadata/tag");
+    fs::create_directory("contacts");
 
     for (auto file: fs::list_files(fs::Path{"content"})) {
         if (fs::is_hidden(file)) {
