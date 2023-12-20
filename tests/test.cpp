@@ -1,5 +1,9 @@
 #include "test.h"
+#include "terminal.h"
 #include <iostream>
+
+static int all_test_count = 0;
+static int current_test = 0;
 
 test::assert_exception::assert_exception(const std::string &what_test, const std::string &what_failed)
         : test_name(what_test), message(what_failed) {}
@@ -23,7 +27,8 @@ void test::completed() {
 }
 
 void test::completed(const std::string &test) {
-    std::cout << "[" << test << "] test completed" << std::endl;
+    terminal::clear_screen();
+    std::cout << "[" << test << "] (" << current_test + 1 << "/" << all_test_count << ") test completed" << std::endl;
 }
 
 void test::failed(const std::vector<std::string> &failed_tests) {
@@ -39,15 +44,16 @@ void test::failed(const std::vector<std::string> &failed_tests) {
 }
 
 void test::run_tests(const std::vector<void (*)()> &tests) {
+    all_test_count = tests.size();
     auto failures = std::vector<std::string>();
-    for (auto test: tests) {
+    for (current_test = 0; current_test < tests.size(); current_test++) {
         try {
-            test();
+            tests[current_test]();
         } catch (const assert_exception &e) {
             std::cout << "[" << e.what_test() << "] " << e.what() << std::endl;
             failures.push_back(e.what_test());
         } catch (const std::exception &e) {
-            std::cerr << "A unit failed for unknown error: "<< e.what() << std::endl;
+            std::cerr << "A unit failed for unknown error: " << e.what() << std::endl;
             failures.emplace_back("known");
         }
     }
