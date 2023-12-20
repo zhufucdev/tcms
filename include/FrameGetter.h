@@ -7,12 +7,14 @@
 
 #include "increment.h"
 #include "content.h"
+#include <map>
 
 namespace tcms {
     class FrameGetter {
         id_type id;
         FrameType type;
-        Frame *cache;
+        static std::map<id_type, Frame *> cache;
+        static std::map<id_type, size_t> rc;
 
     public:
         FrameGetter(id_type id, FrameType type);

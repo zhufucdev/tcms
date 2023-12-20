@@ -12,6 +12,7 @@ namespace tcms {
     private:
         id_type id;
         std::vector<FrameGetter *> frame_getters;
+        std::vector<Tag *> tags;
     public:
         explicit Article(id_type id);
 
@@ -19,7 +20,9 @@ namespace tcms {
 
         id_type get_id() const;
 
-        std::vector<FrameGetter *> get_frames();
+        std::vector<FrameGetter *> get_frames() const;
+
+        std::vector<Tag *> get_tags() const;
 
         ByteArray serialize() const override;
 

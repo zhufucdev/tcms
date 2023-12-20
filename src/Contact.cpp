@@ -1,4 +1,4 @@
-#include "contact.h"
+#include "Contact.h"
 #include "increment.h"
 
 tcms::Contact::Contact(const std::string &first_name) : names{first_name}, id(increment::get_next_id()) {}

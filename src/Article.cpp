@@ -10,16 +10,29 @@ int Article::get_id() const {
     return id;
 }
 
-std::vector<FrameGetter *> Article::get_frames() {
+std::vector<FrameGetter *> Article::get_frames() const {
     return frame_getters;
 }
 
+std::vector<Tag *> Article::get_tags() const {
+    return tags;
+}
+
 ByteArray Article::serialize() const {
-    size_t len = sizeof(id_type) * (1 + frame_getters.size());
+    size_t len = sizeof(id_type) * (frame_getters.size() + tags.size() + 1) + 2 * sizeof(size_t);
     auto buf = (char *) calloc(len, sizeof(char));
     bytes::write_number(buf, id);
-    for (int i = 0; i < frame_getters.size(); ++i) {
-        bytes::write_number(buf + (i + 1) * sizeof(char), frame_getters[i]->get_id());
+    size_t ptr = sizeof(id_type);
+    bytes::write_number<size_t>(buf + ptr, frame_getters.size());
+    ptr += sizeof(size_t);
+    for (auto frame_getter : frame_getters) {
+        bytes::write_number(buf + ptr, frame_getter->get_id());
+        ptr += sizeof(id_type);
+    }
+    bytes::write_number<size_t>(buf + ptr, tags.size());
+    ptr += sizeof(size_t);
+    for (auto tag : tags) {
+
     }
     return {buf, len};
 }
@@ -27,6 +40,7 @@ ByteArray Article::serialize() const {
 Article *Article::deserialize(ByteArray ba) {
     size_t ptr = sizeof(id_type);
     auto id = bytes::read_number<id_type>(ba.content);
+    increment::add_id(id);
     std::vector<FrameGetter *> frames((ba.len - ptr) / ptr);
     int count = 0;
     while (ptr < ba.len) {

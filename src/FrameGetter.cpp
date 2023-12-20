@@ -7,15 +7,25 @@ fs::Path get_path(id_type id) {
     return fs::Path{"tcms", "frame_getters", std::to_string(id)};
 }
 
+std::map<id_type, Frame *> FrameGetter::cache{};
+std::map<id_type, size_t> FrameGetter::rc{};
+
 FrameGetter::FrameGetter(const id_type id, const tcms::FrameType type) : id(id), type(type) {}
 
 FrameGetter::~FrameGetter() {
-    delete cache;
+    rc[id]--;
+    if (rc[id] <= 0) {
+        rc.erase(id);
+        delete cache[id];
+        cache.erase(id);
+    }
 }
 
 Frame *FrameGetter::get() {
-    if (cache != nullptr) {
-        return cache;
+    try {
+        return cache.at(id);
+    } catch (const std::out_of_range &e) {
+        // ignored
     }
 
     auto ba = fs::read_file(get_path(id));
@@ -30,7 +40,8 @@ Frame *FrameGetter::get() {
         default:
             throw std::runtime_error("unknown frame type");
     }
-    cache = frame;
+    cache[id] = frame;
+    rc[id] = 1;
     return frame;
 }
 
@@ -47,7 +58,7 @@ FrameGetter *FrameGetter::from_file(const fs::Path &path) {
     char type;
     ifs >> type;
     auto buf = (char *) malloc(sizeof(id_type));
-    ifs >> buf;
+    ifs.read(buf, sizeof(id_type));
     auto id = bytes::read_number<id_type>(buf);
     ifs.close();
     return new FrameGetter(id, (FrameType) type);
