@@ -22,6 +22,8 @@ namespace tcms {
 
         id_type get_id() const;
 
+        virtual FrameType get_type() const = 0;
+
         virtual std::string to_string() = 0;
     };
 
@@ -31,8 +33,13 @@ namespace tcms {
         id_type id;
         int depth;
         std::string content;
-    public:
+
         TitleFrame(id_type id, const std::string &content, int depth);
+
+    public:
+        TitleFrame(const std::string &content, int depth);
+
+        FrameType get_type() const override;
 
         std::string to_string() override;
 
@@ -45,8 +52,13 @@ namespace tcms {
     private:
         id_type id;
         std::string content;
-    public:
+
         ParagraphFrame(id_type id, const std::string &content);
+
+    public:
+        ParagraphFrame(const std::string &content);
+
+        FrameType get_type() const override;
 
         std::string to_string() override;
 
@@ -59,8 +71,13 @@ namespace tcms {
     private:
         id_type id;
         std::string caption, extension;
-    public:
+
         ImageFrame(id_type id, const std::string &caption);
+
+    public:
+        explicit ImageFrame(const std::string &caption);
+
+        FrameType get_type() const override;
 
         std::string to_string() override;
 

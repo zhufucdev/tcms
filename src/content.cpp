@@ -12,6 +12,13 @@ id_type Frame::get_id() const {
 
 TitleFrame::TitleFrame(id_type id, const std::string &content, int depth) : Frame(id), depth(depth), content(content) {}
 
+TitleFrame::TitleFrame(const std::string &content, int depth)
+        : Frame(increment::get_next_id()), depth(depth), content(content) {}
+
+FrameType TitleFrame::get_type() const {
+    return FrameType::PARAGRAPH;
+}
+
 std::string TitleFrame::to_string() {
     return content;
 }
@@ -38,6 +45,12 @@ TitleFrame *TitleFrame::deserialize(ByteArray ba) {
 
 ParagraphFrame::ParagraphFrame(id_type id, const std::string &content) : Frame(id), content(content) {}
 
+ParagraphFrame::ParagraphFrame(const std::string &content) : Frame(increment::get_next_id()), content(content) {}
+
+FrameType ParagraphFrame::get_type() const {
+    return FrameType::PARAGRAPH;
+}
+
 std::string ParagraphFrame::to_string() {
     return content;
 }
@@ -62,6 +75,12 @@ ParagraphFrame *ParagraphFrame::deserialize(ByteArray ba) {
 
 ImageFrame::ImageFrame(id_type id, const std::string &caption)
         : Frame(id), caption(caption), extension() {}
+
+ImageFrame::ImageFrame(const std::string &caption) : caption(caption), Frame(increment::get_next_id()) {}
+
+FrameType ImageFrame::get_type() const {
+    return FrameType::IMAGE;
+}
 
 std::string ImageFrame::to_string() {
     return caption;
