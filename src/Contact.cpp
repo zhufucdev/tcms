@@ -9,10 +9,6 @@ id_type tcms::Contact::get_id() const {
     return id;
 }
 
-fs::Path tcms::Contact::get_path() const {
-    return get_path(id);
-}
-
 const std::vector<std::string> &tcms::Contact::get_names() const {
     return names;
 }
@@ -59,8 +55,4 @@ void tcms::Contact::set_name(size_t index, const std::string &name) {
         }
     }
     names[index] = name;
-}
-
-fs::Path tcms::Contact::get_path(id_type id) {
-    return {"contacts", std::to_string(id)};
 }

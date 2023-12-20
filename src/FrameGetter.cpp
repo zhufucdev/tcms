@@ -3,10 +3,13 @@
 
 using namespace tcms;
 
-std::map<id_type, Frame *> FrameGetter::cache{};
-std::map<id_type, size_t> FrameGetter::rc{};
-
-FrameGetter::FrameGetter(const id_type id, const tcms::FrameType type) : id(id), type(type) {}
+FrameGetter::FrameGetter(const id_type id, const tcms::FrameType type) : id(id), type(type) {
+    increment::add_id(id);
+    if (rc.find(id) == rc.end()) {
+        rc[id] = 0;
+    }
+    rc[id]++;
+}
 
 FrameGetter::~FrameGetter() {
     rc[id]--;
@@ -17,6 +20,16 @@ FrameGetter::~FrameGetter() {
     }
 }
 
+fs::Path FrameGetter::get_path() const {
+    return get_path(id);
+}
+
+void FrameGetter::remove() {
+    if (rc[id] <= 1) {
+        fs::FileAssociated::remove();
+    }
+}
+
 Frame *FrameGetter::get() const {
     try {
         return cache.at(id);
@@ -24,7 +37,7 @@ Frame *FrameGetter::get() const {
         // ignored
     }
 
-    auto ba = fs::read_file(Frame::get_path(id));
+    auto ba = fs::read_file(get_path());
     Frame *frame;
     switch (type) {
         case FrameType::TITLE:
@@ -40,7 +53,6 @@ Frame *FrameGetter::get() const {
             throw std::runtime_error("unknown frame type");
     }
     cache[id] = frame;
-    rc[id] = 1;
     return frame;
 }
 
@@ -52,25 +64,29 @@ id_type FrameGetter::get_id() const {
     return id;
 }
 
+ByteArray FrameGetter::serialize() const {
+    return get()->serialize();
+}
+
 FrameGetter *FrameGetter::from_file(id_type id) {
-    std::ifstream ifs(fs::path_to_string(Frame::get_path(id)));
+    std::ifstream ifs(fs::path_to_string(get_path(id)));
     char type;
     ifs.read(&type, 1);
     ifs.close();
     return new FrameGetter{id, (FrameType) type};
 }
 
+fs::Path FrameGetter::get_path(id_type id) {
+    return {"frames", std::to_string(id)};
+}
+
 MemoryFrameGetter::MemoryFrameGetter(tcms::Frame *frame) :
         frame(frame), FrameGetter(frame->get_id(), frame->get_type()) {
     auto id = frame->get_id();
     cache[id] = frame;
-    if (rc.count(id)) {
-        rc[id]++;
-    } else {
-        rc[id] = 1;
-    }
 }
 
 Frame *MemoryFrameGetter::get() const {
     return frame;
 }
+

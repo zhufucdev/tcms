@@ -8,7 +8,7 @@
 #include "FrameGetter.h"
 
 namespace tcms {
-    class Article : public fs::FileWritable {
+    class Article : public fs::FileAssociated {
     private:
         std::string name;
         id_type id;
@@ -22,7 +22,7 @@ namespace tcms {
 
         Article(const std::string &name);
 
-        ~Article() = default;
+        ~Article();
 
         id_type get_id() const;
 
@@ -39,6 +39,8 @@ namespace tcms {
         ByteArray serialize() const override;
 
         static Article *deserialize(ByteArray ba);
+
+        void remove() override;
 
         bool operator==(const Article &a) const;
     };

@@ -10,7 +10,7 @@
 #include <map>
 
 namespace tcms {
-    class FrameGetter {
+    class FrameGetter : public fs::FileAssociated {
         id_type id;
         FrameType type;
 
@@ -23,13 +23,21 @@ namespace tcms {
 
         ~FrameGetter();
 
+        fs::Path get_path() const override;
+
+        void remove() override;
+
         virtual Frame *get() const;
 
         FrameType get_type() const;
 
         id_type get_id() const;
 
+        ByteArray serialize() const override;
+
         static FrameGetter *from_file(id_type id);
+
+        static fs::Path get_path(id_type id);
     };
 
     class MemoryFrameGetter : public FrameGetter {

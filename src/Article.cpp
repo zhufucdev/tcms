@@ -2,10 +2,17 @@
 
 using namespace tcms;
 
-Article::Article(id_type id, const std::string &name, const Metadata &metadata, const std::vector<FrameGetter *> &frames)
+Article::Article(id_type id, const std::string &name, const Metadata &metadata,
+                 const std::vector<FrameGetter *> &frames)
         : id(id), name(name), frames(frames), metadata(metadata) {}
 
 Article::Article(const std::string &name) : name(name), id(increment::get_next_id()), frames(), metadata() {}
+
+Article::~Article() {
+    for (auto f : frames) {
+        delete f;
+    }
+}
 
 int Article::get_id() const {
     return id;
@@ -19,13 +26,14 @@ fs::Path Article::get_path() const {
     return fs::Path{"content", std::to_string(id)};
 }
 
-std::vector<FrameGetter*> Article::get_frames() const {
+std::vector<FrameGetter *> Article::get_frames() const {
     return frames;
 }
 
 void Article::add_frame(tcms::Frame *frame) {
-    frames.push_back(new MemoryFrameGetter(frame));
-    frame->write_to_file();
+    auto mfg = new MemoryFrameGetter(frame);
+    frames.push_back(mfg);
+    mfg->write_to_file();
     this->write_to_file();
 }
 
@@ -70,6 +78,13 @@ Article *Article::deserialize(ByteArray ba) {
     auto metadata = Metadata::deserialize(ba + ptr);
     auto article = new Article(id, name, metadata, frames);
     return article;
+}
+
+void Article::remove() {
+    fs::FileAssociated::remove();
+    for (auto f: frames) {
+        f->remove();
+    }
 }
 
 bool Article::operator==(const tcms::Article &a) const {

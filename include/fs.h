@@ -44,11 +44,13 @@ namespace fs {
         Iterator &end() const { return *e; }
     };
 
-    class FileWritable : public bytes::BinarySerializable {
+    class FileAssociated : public bytes::BinarySerializable {
     public:
         virtual Path get_path() const = 0;
 
         virtual void write_to_file();
+
+        virtual void remove();
     };
 
 #if _WIN32

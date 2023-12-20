@@ -15,20 +15,18 @@ namespace tcms {
         IMAGE
     };
 
-    class Frame : public fs::FileWritable {
+    class Frame : public bytes::BinarySerializable {
         id_type id;
     public:
         explicit Frame(id_type id);
+
+        virtual ~Frame() = default;
 
         id_type get_id() const;
 
         virtual FrameType get_type() const = 0;
 
-        fs::Path get_path() const override;
-
         virtual std::string to_string() = 0;
-
-        static fs::Path get_path(id_type id);
     };
 
 

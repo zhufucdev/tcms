@@ -10,14 +10,6 @@ id_type Frame::get_id() const {
     return id;
 }
 
-fs::Path Frame::get_path() const {
-    return get_path(id);
-}
-
-fs::Path Frame::get_path(id_type id) {
-    return {"frames", std::to_string(id)};
-}
-
 TitleFrame::TitleFrame(id_type id, const std::string &content, int depth) : Frame(id), depth(depth), content(content) {}
 
 TitleFrame::TitleFrame(const std::string &content, int depth)

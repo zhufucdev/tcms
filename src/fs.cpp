@@ -264,7 +264,11 @@ bool fs::is_hidden(const Path &path) {
     }
 }
 
-void FileWritable::write_to_file() {
+void FileAssociated::write_to_file() {
     auto ba = serialize();
     fs::write_file(get_path(), ba);
+}
+
+void FileAssociated::remove() {
+    fs::remove_file(get_path());
 }

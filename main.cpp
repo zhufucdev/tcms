@@ -3,6 +3,12 @@
 
 using namespace tcms;
 
+std::map<id_type, size_t> FrameGetter::rc{};
+std::map<id_type, tcms::Frame *> FrameGetter::cache{};
+
+std::map<id_type, size_t> ContactGetter::rc{};
+std::map<id_type, Contact *> ContactGetter::cache{};
+
 TCMS client;
 
 void interrupt(int s) {

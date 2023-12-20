@@ -342,7 +342,7 @@ bool tcms::TCMS::delete_article(const std::string &name) {
         return false;
     } else {
         articles.erase(std::find(articles.begin(), articles.end(), target));
-        fs::remove_file(target->get_path());
+        target->remove();
         delete target;
         return true;
     }

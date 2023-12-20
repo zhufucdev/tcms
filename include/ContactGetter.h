@@ -8,7 +8,7 @@
 
 
 namespace tcms {
-    class ContactGetter {
+    class ContactGetter : public fs::FileAssociated {
         id_type id;
 
     protected:
@@ -20,9 +20,15 @@ namespace tcms {
 
         ~ContactGetter();
 
+        fs::Path get_path() const override;
+
         id_type get_id() const;
 
         virtual Contact *get() const;
+
+        ByteArray serialize() const override;
+
+        static fs::Path get_path(id_type id);
     };
 
     class MemoryContactGetter : public ContactGetter {
@@ -30,7 +36,7 @@ namespace tcms {
     public:
         explicit MemoryContactGetter(Contact *contact);
 
-        Contact * get() const override;
+        Contact *get() const override;
     };
 }
 
