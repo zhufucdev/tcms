@@ -10,10 +10,13 @@ inline fs::Path string_to_path_impl(const std::string &str) {
     Path path;
     for (i = 0, j = 0; i < str.length(); i++) {
         if (str[i] == separator) {
-            path.push_back(str.substr(j, i - 1));
+            if (i > j) {
+                path.push_back(str.substr(j, i - j));
+            }
             j = i + 1;
         }
     }
+    path.push_back(str.substr(j, i - j));
     return path;
 }
 
@@ -23,6 +26,9 @@ inline std::string path_to_string_impl(const fs::Path &path) {
     int i;
     for (i = 0; i < path.size() - 1; ++i) {
         str += path[i];
+        if (path[i].length() == 1 && path[i][0] == separator) {
+            continue;
+        }
         str += separator;
     }
     str += path[i];
@@ -137,7 +143,15 @@ std::string fs::path_to_string(const Path &path) {
 }
 
 Path fs::string_to_path(const std::string &str) {
-    return string_to_path_impl<'/'>(str);
+    if (str.empty()) {
+        return {};
+    } else {
+        auto path = string_to_path_impl<'/'>(str);
+        if (str[0] == '/') {
+            path.insert(path.begin(), "/");
+        }
+        return path;
+    }
 }
 
 UnixFileWalkerIterator::UnixFileWalkerIterator(const Path &directory, bool over) : dirpath(directory), over(over) {

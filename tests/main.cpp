@@ -25,6 +25,13 @@ void test_fs_get_extension() {
     test::assert_eq("get_empty_extension", ".", fs::get_extension(fs::Path{"IDK"}));
 }
 
+void test_fs_path_covrt() {
+    test::assert_eq("path_to_string_1", "/var/log/mginx/latest.log",
+                    fs::path_to_string(fs::Path{"/", "var", "log", "mginx", "latest.log"}));
+    test::assert_eq("path_to_string_2", ".local/share", fs::path_to_string({".local", "share"}));
+    test::assert_eq("string_to_path", fs::Path{"/", "a", "b", "cde"}, fs::string_to_path("/a/b/cde"));
+}
+
 void test_fs_list_files() {
     fs::create_directory("test_fs_list");
     for (int i = 0; i < 5; ++i) {
@@ -71,5 +78,8 @@ void test_terminal() {
 int main() {
     test::run_tests({test_language, test_contact,
                      test_fs_get_extension, test_fs_list_files,
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+                     test_fs_path_covrt,
+#endif
                      test_metadata, test_terminal});
 }
