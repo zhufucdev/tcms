@@ -173,7 +173,7 @@ void tcms::TCMS::event_loop() {
                             if (new_article(args[1])) {
                                 return CommandResult::SUCCESS;
                             } else {
-                                cout << "Duplicated name: " << args[1] << endl;
+                                cout << "duplicated name: " << args[1] << endl;
                                 return CommandResult::EMPTY;
                             }
                         }
@@ -183,13 +183,13 @@ void tcms::TCMS::event_loop() {
                         make_tuple("name", "Delete an article"),
                         [&](auto args) {
                             if (args.size() != 2) {
-                                cout << "Invalid arguments." << endl;
+                                cout << "invalid arguments." << endl;
                                 return CommandResult::EMPTY;
                             }
                             if (delete_article(args[1])) {
                                 return CommandResult::SUCCESS;
                             } else {
-                                cout << "No such article: " << args[1] << endl;
+                                cout << "no such article: " << args[1] << endl;
                                 return CommandResult::EMPTY;
                             }
                         }
@@ -230,9 +230,17 @@ void tcms::TCMS::interrupt(int signal) {
     exit(signal);
 }
 
+tcms::Article *tcms::TCMS::find_article(const std::string &name) {
+    auto iter = std::find_if(articles.begin(), articles.end(), [&](auto a) { return a->get_name() == name; });
+    if (iter == articles.end()) {
+        return nullptr;
+    } else {
+        return *iter;
+    }
+}
+
 bool tcms::TCMS::new_article(const std::string &name) {
-    if (std::find_if(articles.begin(), articles.end(), [&](auto a) { return a->get_name() == name; }) !=
-        articles.end()) {
+    if (find_article(name) != nullptr) {
         return false;
     } else {
         auto a = new Article(name);
@@ -243,5 +251,13 @@ bool tcms::TCMS::new_article(const std::string &name) {
 }
 
 bool tcms::TCMS::delete_article(const std::string &name) {
-
+    auto target = find_article(name);
+    if (target == nullptr) {
+        return false;
+    } else {
+        articles.erase(std::find(articles.begin(), articles.end(), target));
+        fs::remove_file(target->get_path());
+        delete target;
+        return true;
+    }
 }
