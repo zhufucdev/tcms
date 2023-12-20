@@ -23,11 +23,11 @@ std::string std::to_string(const std::string &str) {
 }
 
 void test::completed() {
+    terminal::clear_screen();
     std::cout << "All tests completed. Nothing special happened." << std::endl;
 }
 
 void test::completed(const std::string &test) {
-    terminal::clear_screen();
     std::cout << "[" << test << "] (" << current_test + 1 << "/" << all_test_count << ") test completed" << std::endl;
 }
 
