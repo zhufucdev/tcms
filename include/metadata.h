@@ -34,7 +34,7 @@ namespace tcms {
     public:
         explicit AuthorTag(id_type author_id);
 
-        explicit AuthorTag(ContactGetter *getter);
+        explicit AuthorTag(Contact *contact);
 
         ~AuthorTag() override = default;
 
@@ -48,10 +48,9 @@ namespace tcms {
     };
 
     class Metadata : bytes::BinarySerializable {
-        id_type id;
         std::vector<Tag *> tags;
 
-        Metadata(id_type id, const std::vector<Tag *> &tags);
+        Metadata(const std::vector<Tag *> &tags);
 
     public:
         Metadata();
