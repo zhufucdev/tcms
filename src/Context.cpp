@@ -2,7 +2,7 @@
 #include <iostream>
 
 namespace tcms {
-    Context::Context() : running(false), articles(), cwe(nullptr) {
+    Context::Context() : articles(), cwe(nullptr) {
         fs::create_directory("content");
         fs::create_directory("frames");
         fs::create_directory("contacts");
@@ -36,14 +36,14 @@ namespace tcms {
         bool share_parent = false;
         while (node != nullptr && node->parent != nullptr) {
             removal.push_back(node);
-            if (*new_cwe == node->parent) {
-                new_cwe->parent = node->parent;
+            if (new_cwe != nullptr && *new_cwe == node->parent) {
+                new_cwe->parent = node->parent->parent;
                 share_parent = true;
                 break;
             }
             node = node->parent;
         }
-        if (!share_parent) {
+        if (new_cwe != nullptr && !share_parent) {
             new_cwe->parent = node;
         }
         for (auto const &r: removal) {

@@ -236,6 +236,33 @@ inline auto cat_command_handler(Context &ctx) {
     );
 }
 
+inline auto rm_command_handler(Context &ctx) {
+    return make_tuple(
+            "rm",
+            make_tuple("name", "Delete an element"),
+            [&](auto args, auto &os, auto &es) {
+                if (args.size() < 2) {
+                    es << "too few arguments" << endl;
+                    return CommandResult::EMPTY;
+                }
+                auto read = terminal::read_name(args);
+                while (true) {
+                    auto r = ctx.get_current_working_element()->resolve(read.name);
+                    if (r == nullptr) {
+                        es << "no such element: " << read.name << endl;
+                        return CommandResult::EMPTY;
+                    }
+                    r->remove();
+                    if (read.epos >= args.size()) {
+                        break;
+                    }
+                    read = terminal::read_name(args, read.epos);
+                }
+                return CommandResult::SUCCESS;
+            }
+    );
+}
+
 inline unsigned char frame_filter_by_char(char c) {
     switch (c) {
         case 'h':
@@ -259,21 +286,45 @@ inline unsigned char frame_filter_by_str(const std::string &str) {
     return r;
 }
 
+inline auto ls_command_handler(Context &ctx) {
+    return make_tuple(
+            "ls",
+            make_tuple("pattern", "-l", "-a", "-t type", "-m",
+                       "List matching articles, frames or contacts"),
+            [&](auto args, auto &os, auto &es) {
+                auto read_n = terminal::read_name(args);
+                auto target = ctx.get_current_working_element();
+                if (read_n.name.length() > 1 && read_n.name[0] != '-') {
+                    target = target->resolve(read_n.name);
+                }
+                auto read_f = terminal::read_flags(args, read_n.epos);
+                os << behavior::ListInElement(
+                        ctx,
+                        target,
+                        read_f.has_single('l'),
+                        read_f.has_single('a'),
+                        frame_filter_by_str(read_f.get_parameter('t', "*"))
+                );
+                os << endl;
+                return CommandResult::SUCCESS;
+            }
+    );
+}
+
 void tcms::CliClient::event_loop() {
-    ctx.running = true;
     print_dialog("TCMS - The Content Management System", "Welcome to TCMS. Type ? for help.");
     change_work(ctx, new RootElement(ctx));
 }
 
 void tcms::CliClient::interrupt(int signal) {
-    ctx.running = false;
+    ctx.alter_cwe(nullptr);
     exit(signal);
 }
 
 bool change_work(Context &ctx, RootElement *ele) {
-    while (ctx.running) {
+    while (ctx.get_current_working_element() == ele) {
         if (cin.eof()) {
-            ctx.running = false;
+            ctx.alter_cwe(nullptr);
             break;
         }
         cout << "tcms> ";
@@ -282,21 +333,7 @@ bool change_work(Context &ctx, RootElement *ele) {
         cmd = strings::trim(cmd);
         auto res = handle_command(
                 cmd,
-                make_tuple(
-                        "ls",
-                        make_tuple("pattern", "-l", "-a", "-t type", "-m",
-                                   "List matching articles, frames or contacts"),
-                        [&](auto args, auto &os, auto &es) {
-                            auto read_f = terminal::read_flags(args);
-                            os << behavior::ListInRoot(
-                                    ctx,
-                                    read_f.has_single('l'),
-                                    read_f.has_single('a')
-                            );
-                            os << endl;
-                            return CommandResult::SUCCESS;
-                        }
-                ),
+                ls_command_handler(ctx),
                 make_tuple(
                         "touch",
                         make_tuple("name", "Create an article"),
@@ -320,30 +357,7 @@ bool change_work(Context &ctx, RootElement *ele) {
                             return CommandResult::SUCCESS;
                         }
                 ),
-                make_tuple(
-                        "rm",
-                        make_tuple("name", "Delete an element"),
-                        [&](auto args, auto &os, auto &es) {
-                            if (args.size() < 2) {
-                                es << "too few arguments" << endl;
-                                return CommandResult::EMPTY;
-                            }
-                            auto read = terminal::read_name(args);
-                            while (true) {
-                                auto r = ctx.get_current_working_element()->resolve(read.name);
-                                if (r == nullptr) {
-                                    es << "no such article: " << read.name << endl;
-                                    return CommandResult::EMPTY;
-                                }
-                                r->remove();
-                                if (read.epos >= args.size()) {
-                                    break;
-                                }
-                                read = terminal::read_name(args, read.epos);
-                            }
-                            return CommandResult::SUCCESS;
-                        }
-                ),
+                rm_command_handler(ctx),
                 cw_command_handler(ctx),
                 cat_command_handler(ctx),
                 clear_command_handler(),
@@ -351,7 +365,7 @@ bool change_work(Context &ctx, RootElement *ele) {
                         "q",
                         make_tuple("Exit the program anyway"),
                         [&](auto args, auto &os, auto &es) {
-                            ctx.running = false;
+                            ctx.alter_cwe(nullptr);
                             return CommandResult::SUCCESS;
                         }
                 )
@@ -367,9 +381,9 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
     cout << "\n";
     auto working = true;
     auto header = strings::truncate(article->get_name());
-    while (ctx.running && working) {
+    while (ctx.get_current_working_element() == ele) {
         if (cin.eof()) {
-            ctx.running = false;
+            ctx.alter_cwe(nullptr);
             break;
         }
         cout << header << "> ";
@@ -377,22 +391,7 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
         getline(cin, cmd);
         auto res = handle_command(
                 cmd,
-                make_tuple(
-                        "ls",
-                        make_tuple("-t type", "-l", "List frames (of specific type)"),
-                        [&](auto args, auto &os, auto &es) {
-                            auto read_f = terminal::read_flags(args);
-                            os << behavior::ListInArticle(
-                                    ctx,
-                                    article,
-                                    read_f.has_single('l'),
-                                    read_f.has_single('a'),
-                                    frame_filter_by_str(read_f.get_parameter('t', "*"))
-                            );
-                            os << endl;
-                            return CommandResult::SUCCESS;
-                        }
-                ),
+                ls_command_handler(ctx),
                 cw_command_handler(ctx),
                 make_tuple(
                         "h",
@@ -454,13 +453,14 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
                             return CommandResult::SUCCESS;
                         }
                 ),
+                rm_command_handler(ctx),
                 cat_command_handler(ctx),
                 clear_command_handler(),
                 make_tuple(
                         "q",
                         make_tuple("Stop working on this article"),
                         [&](auto args, auto &os, auto &es) {
-                            working = false;
+                            ctx.alter_cwe(ele->parent);
                             return CommandResult::SUCCESS;
                         }
                 ),
@@ -468,7 +468,7 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
                         "q!",
                         make_tuple("Exit the program anyway"),
                         [&](auto args, auto &os, auto &es) {
-                            ctx.running = false;
+                            ctx.alter_cwe(nullptr);
                             return CommandResult::SUCCESS;
                         }
                 )

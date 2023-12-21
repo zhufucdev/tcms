@@ -94,7 +94,9 @@ namespace tcms {
             auto id = strings::parse_number<id_type>(split[0]);
             auto iter = std::find_if(frames.begin(), frames.end(), [&](auto e) { return e->get_id() == id; });
             if (iter != frames.end()) {
-                return new FrameElement(*iter, ctx);
+                auto ele = new FrameElement(*iter, ctx);
+                ele->parent = this;
+                return ele;
             }
         }
         return nullptr;
@@ -141,7 +143,9 @@ namespace tcms {
     }
 
     void FrameElement::remove() {
-        getter->remove();
+        if (auto a = dynamic_cast<ArticleElement *>(parent)) {
+            a->get()->remove_frame(getter);
+        }
     }
 
     void FrameElement::output(std::ostream &os, tcms::ExportVariant variant) {

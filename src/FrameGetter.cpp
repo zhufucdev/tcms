@@ -27,6 +27,10 @@ fs::Path FrameGetter::get_path() const {
 void FrameGetter::remove() {
     if (rc[id] <= 1) {
         fs::FileAssociated::remove();
+        if (type == IMAGE) {
+            auto i = dynamic_cast<ImageFrame *>(get());
+            fs::remove_file(i->get_image_path());
+        }
     }
 }
 

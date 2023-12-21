@@ -5,7 +5,8 @@ using namespace tcms::behavior;
 
 Behavior::Behavior(const tcms::Context &ctx) : ctx(ctx) {}
 
-ListArticle::ListArticle(const tcms::Context &ctx, const tcms::Article *article, bool detailed, bool separator, bool dot_name)
+ListArticle::ListArticle(const tcms::Context &ctx, const tcms::Article *article, bool detailed, bool separator,
+                         bool dot_name)
         : Behavior(ctx), article(article), detailed(detailed), separator(separator), dot_name(dot_name) {}
 
 std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListArticle &la) {
@@ -46,7 +47,8 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInRoot &lr)
     return os;
 }
 
-ListInArticle::ListInArticle(const Context &ctx, const tcms::Article *article, bool detailed, bool all, unsigned char type_filter)
+ListInArticle::ListInArticle(const Context &ctx, const tcms::Article *article, bool detailed, bool all,
+                             unsigned char type_filter)
         : Behavior(ctx), article(article), detailed(detailed), all(all), type(type_filter) {}
 
 std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInArticle &la) {
@@ -87,6 +89,29 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInArticle &
             }
             os << f->get_id() << '\t';
         }
+    }
+    return os;
+}
+
+ListInElement::ListInElement(const tcms::Context &ctx, const tcms::Element *ele, bool detailed, bool all,
+                             unsigned char type_filter)
+        : Behavior(ctx), element(ele), detailed(detailed), all(all), type(type_filter) {}
+
+std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInElement &le) {
+    switch (le.element->get_type()) {
+        case ROOT:
+            os << ListInRoot(le.ctx, le.detailed, le.all);
+            break;
+        case ARTICLE:
+            os << ListInArticle(le.ctx, dynamic_cast<const ArticleElement *>(le.element)->get(), le.detailed, le.all,
+                                le.type);
+            break;
+        case FRAME:
+            os << "." << std::endl;
+            break;
+        case CONTACT:
+            os << "idk" << std::endl;
+            break;
     }
     return os;
 }

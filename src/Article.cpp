@@ -9,7 +9,7 @@ Article::Article(id_type id, const std::string &name, const Metadata &metadata,
 Article::Article(const std::string &name) : name(name), id(increment::get_next_id()), frames(), metadata() {}
 
 Article::~Article() {
-    for (auto f : frames) {
+    for (auto f: frames) {
         delete f;
     }
 }
@@ -35,6 +35,12 @@ void Article::add_frame(tcms::Frame *frame) {
     frames.push_back(mfg);
     mfg->write_to_file();
     this->write_to_file();
+}
+
+void Article::remove_frame(tcms::FrameGetter *frame) {
+    frames.erase(std::find_if(frames.begin(), frames.end(),
+                              [&](auto g) { return g->get_id() == frame->get_id(); }));
+    frame->remove();
 }
 
 Metadata &Article::get_metadata() {

@@ -34,6 +34,8 @@ namespace tcms {
 
         void add_frame(Frame *frame);
 
+        void remove_frame(FrameGetter *frame);
+
         Metadata &get_metadata();
 
         ByteArray serialize() const override;
