@@ -10,9 +10,9 @@
 
 namespace tcms {
     enum FrameType {
-        TITLE = 0,
-        PARAGRAPH,
-        IMAGE
+        TITLE = 0b00000001,
+        PARAGRAPH = 0b00000010,
+        IMAGE = 0b00000100,
     };
 
     class Frame : public bytes::BinarySerializable {

@@ -79,3 +79,18 @@ ReadFlags terminal::read_flags(const std::vector<std::string> &args, str_vec_siz
     }
     return {singles, parameters};
 }
+
+ReadFlags::ReadFlags(const std::map<char, bool> &singles, const std::map<char, std::string> &parameters)
+        : singles(singles), parameters(parameters) {}
+
+bool ReadFlags::has_single(char flag) {
+    return singles[flag];
+}
+
+std::string ReadFlags::get_parameter(char flag, const std::string &def) {
+    if (parameters.find(flag) != parameters.end()) {
+        return parameters[flag];
+    } else {
+        return def;
+    }
+}

@@ -5,22 +5,33 @@
 
 namespace tcms {
     namespace behavior {
-        class ListInRoot {
-            const std::vector<Article *> &articles;
-            const bool detailed;
+        class ListArticle {
+            const Article *article;
+            const bool detailed, separator, dot_name;
 
         public:
-            explicit ListInRoot(const std::vector<Article *> &articles, bool detailed);
+            ListArticle(const Article *article, bool detailed, bool separator = true, bool dot_name = false);
+
+            friend std::ostream &operator<<(std::ostream &os, const ListArticle &lr);
+        };
+
+        class ListInRoot {
+            const std::vector<Article *> &articles;
+            const bool detailed, all;
+
+        public:
+            explicit ListInRoot(const std::vector<Article *> &articles, bool detailed, bool all);
 
             friend std::ostream &operator<<(std::ostream &os, const ListInRoot &lr);
         };
 
         class ListInArticle {
             const Article *article;
-            const bool detailed;
+            const bool detailed, all;
+            const unsigned char type;
 
         public:
-            explicit ListInArticle(Article *article, bool detailed);
+            explicit ListInArticle(const Article *article, bool detailed, bool all, unsigned char type_filter);
 
             friend std::ostream &operator<<(std::ostream &os, const ListInArticle &la);
         };

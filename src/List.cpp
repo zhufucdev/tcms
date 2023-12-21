@@ -3,36 +3,63 @@
 
 using namespace tcms::behavior;
 
-ListInRoot::ListInRoot(const std::vector<Article *> &articles, bool detailed)
-        : articles(articles), detailed(detailed) {}
+ListArticle::ListArticle(const tcms::Article *article, bool detailed, bool separator, bool dot_name)
+        : article(article), detailed(detailed), separator(separator), dot_name(dot_name) {}
 
-std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInRoot &lr) {
-    if (lr.detailed) {
-        for (int i = 0; i < lr.articles.size(); ++i) {
-            auto a = lr.articles[i];
-            os << a->get_id() << '\t' << a->get_name() << '\t' << a->get_frames().size() << "f" << '\t'
-               << fs::path_to_string(a->get_path());
-            if (i < lr.articles.size() - 1) {
-                os << '\n';
-            }
+std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListArticle &la) {
+    if (la.detailed) {
+        os << la.article->get_id() << '\t' << (la.dot_name ? "." : la.article->get_name()) << '\t'
+           << la.article->get_frames().size() << "f" << '\t' << fs::path_to_string(la.article->get_path());
+        if (la.separator) {
+            os << '\n';
         }
     } else {
-        for (auto a: lr.articles) {
-            os << a->get_name() << '\t';
+        os << (la.dot_name ? "." : la.article->get_name());
+        if (la.separator) {
+            os << '\t';
         }
     }
     return os;
 }
 
-ListInArticle::ListInArticle(tcms::Article *article, bool detailed)
-        : article(article), detailed(detailed) {}
+ListInRoot::ListInRoot(const std::vector<Article *> &articles, bool detailed, bool all)
+        : articles(articles), detailed(detailed), all(all) {}
+
+std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInRoot &lr) {
+    if (lr.detailed) {
+        if (lr.all) {
+            os << ".\ttcms_root" << std::endl;
+        }
+        for (int i = 0; i < lr.articles.size(); ++i) {
+            os << ListArticle(lr.articles[i], true, i < lr.articles.size() - 1);
+        }
+    } else {
+        if (lr.all) {
+            os << "." << '\t';
+        }
+        for (const auto &a: lr.articles) {
+            os << ListArticle(a, false);
+        }
+    }
+    return os;
+}
+
+ListInArticle::ListInArticle(const tcms::Article *article, bool detailed, bool all, unsigned char type_filter)
+        : article(article), detailed(detailed), all(all), type(type_filter) {}
 
 std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInArticle &la) {
     auto frames = la.article->get_frames();
+    if (la.all) {
+        os << ListArticle(la.article, la.detailed, true, true);
+    }
     if (la.detailed) {
         for (int i = 0; i < frames.size(); ++i) {
             os << frames[i]->get_id() << '\t';
-            switch (frames[i]->get_type()) {
+            auto type = frames[i]->get_type();
+            if ((type & la.type) != type) {
+                continue;
+            }
+            switch (type) {
                 case TITLE:
                     os << "header";
                     break;
@@ -41,6 +68,8 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInArticle &
                     break;
                 case IMAGE:
                     os << "image";
+                    break;
+                default:
                     break;
             }
             os << '\t' << frames[i]->estimated_size() << "B" << '\t'
@@ -51,9 +80,11 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInArticle &
         }
     } else {
         for (auto f: frames) {
+            if ((f->get_type() & la.type) != f->get_type()) {
+                continue;
+            }
             os << f->get_id() << '\t';
         }
     }
     return os;
 }
-

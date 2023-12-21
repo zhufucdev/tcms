@@ -13,9 +13,15 @@ namespace terminal {
         std::string name;
     };
 
-    struct ReadFlags {
+    class ReadFlags {
         std::map<char, bool> singles;
         std::map<char, std::string> parameters;
+    public:
+        ReadFlags(const std::map<char, bool>& singles, const std::map<char, std::string>& parameters);
+
+        bool has_single(char flag);
+
+        std::string get_parameter(char flag, const std::string &def);
     };
 
     void clear_screen();

@@ -8,8 +8,10 @@
 #include <fstream>
 
 using namespace std;
+using namespace tcms;
 
-tcms::TCMS::TCMS() : running(false), articles() {
+/* Initialization */
+TCMS::TCMS() : running(false), articles() {
     fs::create_directory("content");
     fs::create_directory("frames");
     fs::create_directory("contacts");
@@ -29,11 +31,13 @@ tcms::TCMS::TCMS() : running(false), articles() {
     }
 }
 
-tcms::TCMS::~TCMS() {
+TCMS::~TCMS() {
     for (auto a: articles) {
         delete a;
     }
 }
+
+/* Command logic */
 
 enum CommandResult {
     SUCCESS = 0,
@@ -199,6 +203,35 @@ inline auto clear_command_handler() {
     );
 }
 
+bool change_work(bool &running, Article *article);
+
+bool change_work(bool &running, Frame *frame);
+
+bool change_work(bool &running, Metadata *metadata);
+
+inline unsigned char frame_filter_by_char(char c) {
+    switch (c) {
+        case 'h':
+            return FrameType::TITLE;
+        case 'p':
+            return FrameType::PARAGRAPH;
+        case 'i':
+            return FrameType::IMAGE;
+        case '*':
+            return 0xff;
+        default:
+            return 0;
+    }
+}
+
+inline unsigned char frame_filter_by_str(const std::string &str) {
+    unsigned char r = 0;
+    for (auto c: str) {
+        r |= frame_filter_by_char(c);
+    }
+    return r;
+}
+
 void tcms::TCMS::event_loop() {
     running = true;
     print_dialog("TCMS - The Content Management System", "Welcome to TCMS. Type ? for help.");
@@ -215,12 +248,14 @@ void tcms::TCMS::event_loop() {
                 cmd,
                 make_tuple(
                         "ls",
-                        make_tuple("pattern", "-l", "-t type", "-m", "List matching articles, frames or contacts"),
+                        make_tuple("pattern", "-l", "-a", "-t type", "-m",
+                                   "List matching articles, frames or contacts"),
                         [&](auto args, auto &os, auto &es) {
                             auto read_f = terminal::read_flags(args);
                             os << behavior::ListInRoot(
                                     articles,
-                                    read_f.singles.find('l') != read_f.singles.end()
+                                    read_f.has_single('l'),
+                                    read_f.has_single('a')
                             );
                             os << endl;
                             return CommandResult::SUCCESS;
@@ -284,7 +319,7 @@ void tcms::TCMS::event_loop() {
                                 es << "no such article: " << read.name << endl;
                                 return CommandResult::EMPTY;
                             } else {
-                                return change_work(article) ? CommandResult::SUCCESS : CommandResult::FAILURE;
+                                return change_work(running, article) ? CommandResult::SUCCESS : CommandResult::FAILURE;
                             }
                         }
                 ),
@@ -351,7 +386,7 @@ bool tcms::TCMS::delete_article(const std::string &name) {
     }
 }
 
-bool tcms::TCMS::change_work(tcms::Article *article) {
+bool change_work(bool &running, tcms::Article *article) {
     cout << "\n\n";
     print_dialog(article->get_name(), "Working on this article. Type ? for help.");
     cout << "\n";
@@ -374,7 +409,9 @@ bool tcms::TCMS::change_work(tcms::Article *article) {
                             auto read_f = terminal::read_flags(args);
                             os << behavior::ListInArticle(
                                     article,
-                                    read_f.singles.find('l') != read_f.singles.end()
+                                    read_f.has_single('l'),
+                                    read_f.has_single('a'),
+                                    frame_filter_by_str(read_f.get_parameter('t', "*"))
                             );
                             os << endl;
                             return CommandResult::SUCCESS;
@@ -491,10 +528,10 @@ bool tcms::TCMS::change_work(tcms::Article *article) {
     return true;
 }
 
-bool tcms::TCMS::change_work(tcms::Frame *frame) {
+bool change_work(bool &running, tcms::Frame *frame) {
     return false;
 }
 
-bool tcms::TCMS::change_work(tcms::Contact *contact) {
+bool change_work(bool &running, tcms::Contact *contact) {
     return false;
 }

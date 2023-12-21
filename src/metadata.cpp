@@ -5,16 +5,16 @@
 using namespace tcms;
 
 enum TagType {
-    Lang = 0,
-    Author,
-    Title
+    LANG = 0b00000001,
+    AUTHOR = 0b00000010,
+    TITLE = 0b00000100,
 };
 
 Tag *Tag::deserialize(ByteArray ba) {
     switch (ba.content[0]) {
-        case TagType::Lang:
+        case TagType::LANG:
             return LanguageTag::deserialize(ba);
-        case TagType::Author:
+        case TagType::AUTHOR:
             return AuthorTag::deserialize(ba);
         default:
             throw std::runtime_error("Unknown type (deserializing Tag)");
@@ -27,13 +27,13 @@ ByteArray tcms::LanguageTag::serialize() const {
     auto str = lang.to_string();
     auto len = str.length() + 2;
     auto buf = (char *) calloc(len, sizeof(char));
-    buf[0] = TagType::Lang;
+    buf[0] = TagType::LANG;
     std::memcpy(buf + 1, str.c_str(), str.length());
     return {buf, len};
 }
 
 LanguageTag *LanguageTag::deserialize(ByteArray ba) {
-    if (ba.content[0] != TagType::Lang) {
+    if (ba.content[0] != TagType::LANG) {
         throw std::runtime_error("Unexpected header (deserializing LanguageTag)");
     }
     auto str = std::string(ba.content + 1);
@@ -64,13 +64,13 @@ std::string AuthorTag::to_string() const {
 ByteArray AuthorTag::serialize() const {
     auto cid = author->get_id();
     auto buf = (char *) malloc(sizeof(size_t) + 1);
-    buf[0] = TagType::Author;
+    buf[0] = TagType::AUTHOR;
     bytes::write_number(buf + 1, cid);
     return {buf, sizeof(size_t)};
 }
 
 AuthorTag *AuthorTag::deserialize(ByteArray ba) {
-    if (ba.content[0] != TagType::Author) {
+    if (ba.content[0] != TagType::AUTHOR) {
         throw std::runtime_error("Unexpected header (deserializing AuthorTag)");
     }
     auto cid = bytes::read_number<id_type>(ba.content + 1);
