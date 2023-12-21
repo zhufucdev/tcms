@@ -39,7 +39,6 @@ namespace tcms {
     class Context {
         Element *cwe;
     public:
-        bool running;
         std::vector<Article *> articles;
 
         Context();
@@ -47,6 +46,8 @@ namespace tcms {
         ~Context();
 
         void alter_cwe(Element *cwe);
+
+        bool is_running() const;
 
         Element *get_current_working_element() const;
     };
@@ -156,6 +157,18 @@ namespace tcms {
                                    unsigned char type_filter);
 
             friend std::ostream &operator<<(std::ostream &os, const ListInArticle &la);
+        };
+
+        class ListInElement : public Behavior {
+            const Element *element;
+            const bool detailed, all;
+            const unsigned char type;
+
+        public:
+            explicit ListInElement(const Context &ctx, const Element *ele, bool detailed, bool all,
+                                   unsigned char type_filter);
+
+            friend std::ostream &operator<<(std::ostream &os, const ListInElement &le);
         };
 
 #define Ostreamable(T, Name) \
