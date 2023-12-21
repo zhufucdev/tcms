@@ -115,7 +115,7 @@ ByteArray ImageFrame::serialize() const {
     char *buf = (char *) calloc(len, sizeof(char));
     buf[0] = FrameType::IMAGE;
     bytes::write_number(buf + 1, get_id());
-    std::memcpy(buf + 1 + sizeof(char), sba.content, sba.len);
+    std::memcpy(buf + 1 + sizeof(id_type), sba.content, sba.len);
     delete sba.content;
     return {buf, len};
 }
