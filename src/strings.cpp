@@ -15,7 +15,7 @@ std::string strings::trim(const std::string &str) {
     return str.substr(i, j + 1);
 }
 
-std::vector<std::string> strings::split(const std::string &str, char separator) {
+std::vector<std::string> strings::split(const std::string &str, char separator, std::vector<std::string>::size_type limit) {
     std::vector<std::string> buf;
     int i, j;
     for (i = 0, j = 0; i < str.length(); i++) {
@@ -23,8 +23,11 @@ std::vector<std::string> strings::split(const std::string &str, char separator) 
             buf.emplace_back(str.substr(j, i - j));
             j = i + 1;
         }
+        if (limit > 0 && buf.size() >= limit) {
+            break;
+        }
     }
-    if (i != j) {
+    if (i > j) {
         buf.emplace_back(str.substr(j, i));
     }
     return buf;

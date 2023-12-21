@@ -15,11 +15,15 @@ TitleFrame::TitleFrame(id_type id, const std::string &content, int depth) : Fram
 TitleFrame::TitleFrame(const std::string &content, int depth)
         : Frame(increment::get_next_id()), depth(depth), content(content) {}
 
+unsigned char TitleFrame::get_depth() const {
+    return depth;
+}
+
 FrameType TitleFrame::get_type() const {
     return FrameType::PARAGRAPH;
 }
 
-std::string TitleFrame::to_string() {
+std::string TitleFrame::to_string() const {
     return content;
 }
 
@@ -51,7 +55,7 @@ FrameType ParagraphFrame::get_type() const {
     return FrameType::PARAGRAPH;
 }
 
-std::string ParagraphFrame::to_string() {
+std::string ParagraphFrame::to_string() const {
     return content;
 }
 
@@ -65,7 +69,7 @@ ByteArray ParagraphFrame::serialize() const {
 }
 
 ParagraphFrame *ParagraphFrame::deserialize(ByteArray ba) {
-    if (ba.content[0]) {
+    if (ba.content[0] != FrameType::PARAGRAPH) {
         throw std::runtime_error("unexpected header (deserializing ParagraphFrame)");
     }
     auto id = bytes::read_number<id_type>(ba.content + 1);
@@ -78,15 +82,19 @@ ImageFrame::ImageFrame(id_type id, const std::string &caption)
 
 ImageFrame::ImageFrame(const std::string &caption) : caption(caption), Frame(increment::get_next_id()) {}
 
+std::string ImageFrame::get_caption() const {
+    return caption;
+}
+
 FrameType ImageFrame::get_type() const {
     return FrameType::IMAGE;
 }
 
-std::string ImageFrame::to_string() {
+std::string ImageFrame::to_string() const {
     return caption;
 }
 
-fs::Path ImageFrame::get_image_path() {
+fs::Path ImageFrame::get_image_path() const {
     if (extension.empty()) {
         return {};
     }

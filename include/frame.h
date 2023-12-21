@@ -26,7 +26,7 @@ namespace tcms {
 
         virtual FrameType get_type() const = 0;
 
-        virtual std::string to_string() = 0;
+        virtual std::string to_string() const = 0;
     };
 
 
@@ -41,9 +41,11 @@ namespace tcms {
     public:
         TitleFrame(const std::string &content, int depth);
 
+        unsigned char get_depth() const;
+
         FrameType get_type() const override;
 
-        std::string to_string() override;
+        std::string to_string() const override;
 
         ByteArray serialize() const override;
 
@@ -62,7 +64,7 @@ namespace tcms {
 
         FrameType get_type() const override;
 
-        std::string to_string() override;
+        std::string to_string() const override;
 
         ByteArray serialize() const override;
 
@@ -79,13 +81,15 @@ namespace tcms {
     public:
         explicit ImageFrame(const std::string &caption);
 
+        std::string get_caption() const;
+
         FrameType get_type() const override;
 
-        std::string to_string() override;
+        std::string to_string() const override;
 
         void set_file(const fs::Path &path);
 
-        fs::Path get_image_path();
+        fs::Path get_image_path() const;
 
         ByteArray serialize() const override;
 

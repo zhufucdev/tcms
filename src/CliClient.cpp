@@ -1,9 +1,8 @@
-#include "TCMS.h"
+#include "tcms.h"
 #include "fs.h"
 #include "strings.h"
 #include "terminal.h"
 #include "find.h"
-#include "List.h"
 #include <iostream>
 #include <fstream>
 
@@ -11,31 +10,7 @@ using namespace std;
 using namespace tcms;
 
 /* Initialization */
-TCMS::TCMS() : running(false), articles() {
-    fs::create_directory("content");
-    fs::create_directory("frames");
-    fs::create_directory("contacts");
-    fs::create_directory("images");
-
-    for (auto file: fs::list_files(fs::Path{"content"})) {
-        if (fs::is_hidden(file)) {
-            continue;
-        }
-        auto ba = fs::read_file(file);
-        try {
-            auto article = Article::deserialize(ba);
-            articles.push_back(article);
-        } catch (const std::exception &any) {
-            cerr << "Error while reading " << fs::path_to_string(file) << ": " << any.what() << endl;
-        }
-    }
-}
-
-TCMS::~TCMS() {
-    for (auto a: articles) {
-        delete a;
-    }
-}
+CliClient::CliClient(Context &ctx) : ctx(ctx) {}
 
 /* Command logic */
 
@@ -192,6 +167,8 @@ inline void default_command_result_handler(CommandResult res, const string &cmd)
     }
 }
 
+bool change_work(Context &ctx, Element *we);
+
 inline auto clear_command_handler() {
     return make_tuple(
             "clear",
@@ -203,11 +180,61 @@ inline auto clear_command_handler() {
     );
 }
 
-bool change_work(bool &running, Article *article);
+inline auto cw_command_handler(Context &ctx) {
+    return make_tuple(
+            "cw",
+            make_tuple("name", "Change the working target"),
+            [&](auto args, auto &os, auto &es) {
+                auto read = terminal::read_name(args);
+                if (read.epos == 1) {
+                    es << "lacking parameter to element name" << endl;
+                    return CommandResult::EMPTY;
+                }
+                auto article = ctx.get_current_working_element()->resolve(read.name);
+                if (article == nullptr) {
+                    es << "no such element: " << read.name << endl;
+                    return CommandResult::EMPTY;
+                } else {
+                    return change_work(ctx, article) ? CommandResult::SUCCESS : CommandResult::FAILURE;
+                }
+            }
+    );
+}
 
-bool change_work(bool &running, Frame *frame);
-
-bool change_work(bool &running, Metadata *metadata);
+inline auto cat_command_handler(Context &ctx) {
+    return make_tuple(
+            "cat",
+            make_tuple("name", "--markdown", "--html", "Print an element, optionally in given variant"),
+            [&](auto args, auto &os, auto &es) {
+                auto read_n = terminal::read_name(args);
+                if (read_n.epos < args.size() - 1) {
+                    es << "too many arguments" << endl;
+                    return CommandResult::EMPTY;
+                } else {
+                    auto target = ctx.get_current_working_element()->resolve(read_n.name);
+                    if (target == nullptr) {
+                        es << "no such element: " << read_n.name << endl;
+                        return CommandResult::EMPTY;
+                    } else {
+                        auto read_f = terminal::read_flags(args, read_n.epos);
+                        ExportVariant variant = PLAIN;
+                        if (read_f.has_named("markdown")) {
+                            variant = MARKDOWN;
+                        } else if (read_f.has_named("html")) {
+                            variant = HTML;
+                        }
+                        try {
+                            target->output(os, variant);
+                            return CommandResult::SUCCESS;
+                        } catch (const std::exception &e) {
+                            es << "Error while reading frame: " << e.what() << endl;
+                            return CommandResult::EMPTY;
+                        }
+                    }
+                }
+            }
+    );
+}
 
 inline unsigned char frame_filter_by_char(char c) {
     switch (c) {
@@ -232,12 +259,21 @@ inline unsigned char frame_filter_by_str(const std::string &str) {
     return r;
 }
 
-void tcms::TCMS::event_loop() {
-    running = true;
+void tcms::CliClient::event_loop() {
+    ctx.running = true;
     print_dialog("TCMS - The Content Management System", "Welcome to TCMS. Type ? for help.");
-    while (running) {
+    change_work(ctx, new RootElement(ctx));
+}
+
+void tcms::CliClient::interrupt(int signal) {
+    ctx.running = false;
+    exit(signal);
+}
+
+bool change_work(Context &ctx, RootElement *ele) {
+    while (ctx.running) {
         if (cin.eof()) {
-            running = false;
+            ctx.running = false;
             break;
         }
         cout << "tcms> ";
@@ -253,7 +289,7 @@ void tcms::TCMS::event_loop() {
                         [&](auto args, auto &os, auto &es) {
                             auto read_f = terminal::read_flags(args);
                             os << behavior::ListInRoot(
-                                    articles,
+                                    ctx,
                                     read_f.has_single('l'),
                                     read_f.has_single('a')
                             );
@@ -271,9 +307,10 @@ void tcms::TCMS::event_loop() {
                             }
                             auto read = terminal::read_name(args);
                             while (true) {
-                                if (!new_article(read.name)) {
-                                    os << "duplicated name: " << args[1] << endl;
-                                    return CommandResult::EMPTY;
+                                try {
+                                    new ArticleElement(read.name, ctx);
+                                } catch (const std::exception &e) {
+                                    es << e.what() << endl;
                                 }
                                 if (read.epos >= args.size()) {
                                     break;
@@ -285,7 +322,7 @@ void tcms::TCMS::event_loop() {
                 ),
                 make_tuple(
                         "rm",
-                        make_tuple("name", "Delete an article"),
+                        make_tuple("name", "Delete an element"),
                         [&](auto args, auto &os, auto &es) {
                             if (args.size() < 2) {
                                 es << "too few arguments" << endl;
@@ -293,10 +330,12 @@ void tcms::TCMS::event_loop() {
                             }
                             auto read = terminal::read_name(args);
                             while (true) {
-                                if (!delete_article(read.name)) {
+                                auto r = ctx.get_current_working_element()->resolve(read.name);
+                                if (r == nullptr) {
                                     es << "no such article: " << read.name << endl;
                                     return CommandResult::EMPTY;
                                 }
+                                r->remove();
                                 if (read.epos >= args.size()) {
                                     break;
                                 }
@@ -305,96 +344,32 @@ void tcms::TCMS::event_loop() {
                             return CommandResult::SUCCESS;
                         }
                 ),
-                make_tuple(
-                        "cw",
-                        make_tuple("name", "-t type", "Change the working target (of specific type)"),
-                        [&](auto args, auto &os, auto &es) {
-                            auto read = terminal::read_name(args);
-                            if (read.epos == 1) {
-                                es << "lacking parameter to article name" << endl;
-                                return CommandResult::EMPTY;
-                            }
-                            auto article = find_article(read.name);
-                            if (article == nullptr) {
-                                es << "no such article: " << read.name << endl;
-                                return CommandResult::EMPTY;
-                            } else {
-                                return change_work(running, article) ? CommandResult::SUCCESS : CommandResult::FAILURE;
-                            }
-                        }
-                ),
-                make_tuple(
-                        "cat",
-                        make_tuple("name", "-t type", "Print a target (of specific type)"),
-                        [&](auto args, auto &os, auto &es) {
-                            auto read = terminal::read_name(args);
-                            if (read.epos < args.size()) {
-                                es << "too many arguments" << endl;
-                                return CommandResult::EMPTY;
-                            }
-                            return CommandResult::EMPTY;
-                        }
-                ),
+                cw_command_handler(ctx),
+                cat_command_handler(ctx),
                 clear_command_handler(),
                 make_tuple(
                         "q",
                         make_tuple("Exit the program anyway"),
                         [&](auto args, auto &os, auto &es) {
-                            running = false;
+                            ctx.running = false;
                             return CommandResult::SUCCESS;
                         }
                 )
         );
         default_command_result_handler(res, cmd);
     }
+    return true;
 }
 
-void tcms::TCMS::interrupt(int signal) {
-    running = false;
-    exit(signal);
-}
-
-tcms::Article *tcms::TCMS::find_article(const std::string &name) {
-    auto iter = std::find_if(articles.begin(), articles.end(), [&](auto a) { return a->get_name() == name; });
-    if (iter == articles.end()) {
-        return nullptr;
-    } else {
-        return *iter;
-    }
-}
-
-bool tcms::TCMS::new_article(const std::string &name) {
-    if (find_article(name) != nullptr) {
-        return false;
-    } else {
-        auto a = new Article(name);
-        articles.push_back(a);
-        a->write_to_file();
-        return true;
-    }
-}
-
-bool tcms::TCMS::delete_article(const std::string &name) {
-    auto target = find_article(name);
-    if (target == nullptr) {
-        return false;
-    } else {
-        articles.erase(std::find(articles.begin(), articles.end(), target));
-        target->remove();
-        delete target;
-        return true;
-    }
-}
-
-bool change_work(bool &running, tcms::Article *article) {
+bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
     cout << "\n\n";
     print_dialog(article->get_name(), "Working on this article. Type ? for help.");
     cout << "\n";
     auto working = true;
     auto header = strings::truncate(article->get_name());
-    while (running && working) {
+    while (ctx.running && working) {
         if (cin.eof()) {
-            running = false;
+            ctx.running = false;
             break;
         }
         cout << header << "> ";
@@ -408,6 +383,7 @@ bool change_work(bool &running, tcms::Article *article) {
                         [&](auto args, auto &os, auto &es) {
                             auto read_f = terminal::read_flags(args);
                             os << behavior::ListInArticle(
+                                    ctx,
                                     article,
                                     read_f.has_single('l'),
                                     read_f.has_single('a'),
@@ -417,6 +393,7 @@ bool change_work(bool &running, tcms::Article *article) {
                             return CommandResult::SUCCESS;
                         }
                 ),
+                cw_command_handler(ctx),
                 make_tuple(
                         "h",
                         make_tuple("-d depth", "title...", "Append a title (with depth)"),
@@ -477,33 +454,7 @@ bool change_work(bool &running, tcms::Article *article) {
                             return CommandResult::SUCCESS;
                         }
                 ),
-                make_tuple(
-                        "cat",
-                        make_tuple("name", "Print a frame"),
-                        [&](auto args, auto &os, auto &es) {
-                            auto read = terminal::read_name(args);
-                            if (read.epos < args.size() - 1) {
-                                es << "too many arguments" << endl;
-                                return CommandResult::EMPTY;
-                            } else {
-                                auto id = strings::parse_number<id_type>(read.name);
-                                auto frames = article->get_frames();
-                                auto frame = find::by_id<FrameGetter *>(frames.begin(), frames.end(), id);
-                                if (frame == nullptr) {
-                                    es << "no such frame: " << read.name << endl;
-                                    return CommandResult::EMPTY;
-                                } else {
-                                    try {
-                                        os << frame->get()->to_string() << endl;
-                                        return CommandResult::SUCCESS;
-                                    } catch (const std::exception &e) {
-                                        es << "Error while reading frame: " << e.what() << endl;
-                                        return CommandResult::EMPTY;
-                                    }
-                                }
-                            }
-                        }
-                ),
+                cat_command_handler(ctx),
                 clear_command_handler(),
                 make_tuple(
                         "q",
@@ -517,7 +468,7 @@ bool change_work(bool &running, tcms::Article *article) {
                         "q!",
                         make_tuple("Exit the program anyway"),
                         [&](auto args, auto &os, auto &es) {
-                            running = false;
+                            ctx.running = false;
                             return CommandResult::SUCCESS;
                         }
                 )
@@ -528,10 +479,12 @@ bool change_work(bool &running, tcms::Article *article) {
     return true;
 }
 
-bool change_work(bool &running, tcms::Frame *frame) {
-    return false;
-}
-
-bool change_work(bool &running, tcms::Contact *contact) {
+bool change_work(Context &ctx, Element *we) {
+    ctx.alter_cwe(we);
+    if (auto r = dynamic_cast<RootElement *>(we)) {
+        return change_work(ctx, r);
+    } else if (auto a = dynamic_cast<ArticleElement *>(we)) {
+        return change_work(ctx, a->get(), a);
+    }
     return false;
 }

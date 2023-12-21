@@ -1,10 +1,12 @@
-#include "List.h"
+#include "tcms.h"
 #include <ostream>
 
 using namespace tcms::behavior;
 
-ListArticle::ListArticle(const tcms::Article *article, bool detailed, bool separator, bool dot_name)
-        : article(article), detailed(detailed), separator(separator), dot_name(dot_name) {}
+Behavior::Behavior(const tcms::Context &ctx) : ctx(ctx) {}
+
+ListArticle::ListArticle(const tcms::Context &ctx, const tcms::Article *article, bool detailed, bool separator, bool dot_name)
+        : Behavior(ctx), article(article), detailed(detailed), separator(separator), dot_name(dot_name) {}
 
 std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListArticle &la) {
     if (la.detailed) {
@@ -22,35 +24,35 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListArticle &la
     return os;
 }
 
-ListInRoot::ListInRoot(const std::vector<Article *> &articles, bool detailed, bool all)
-        : articles(articles), detailed(detailed), all(all) {}
+ListInRoot::ListInRoot(const tcms::Context &ctx, bool detailed, bool all)
+        : Behavior(ctx), detailed(detailed), all(all) {}
 
 std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInRoot &lr) {
     if (lr.detailed) {
         if (lr.all) {
             os << ".\ttcms_root" << std::endl;
         }
-        for (int i = 0; i < lr.articles.size(); ++i) {
-            os << ListArticle(lr.articles[i], true, i < lr.articles.size() - 1);
+        for (int i = 0; i < lr.ctx.articles.size(); ++i) {
+            os << ListArticle(lr.ctx, lr.ctx.articles[i], true, i < lr.ctx.articles.size() - 1);
         }
     } else {
         if (lr.all) {
             os << "." << '\t';
         }
-        for (const auto &a: lr.articles) {
-            os << ListArticle(a, false);
+        for (const auto &a: lr.ctx.articles) {
+            os << ListArticle(lr.ctx, a, false);
         }
     }
     return os;
 }
 
-ListInArticle::ListInArticle(const tcms::Article *article, bool detailed, bool all, unsigned char type_filter)
-        : article(article), detailed(detailed), all(all), type(type_filter) {}
+ListInArticle::ListInArticle(const Context &ctx, const tcms::Article *article, bool detailed, bool all, unsigned char type_filter)
+        : Behavior(ctx), article(article), detailed(detailed), all(all), type(type_filter) {}
 
 std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInArticle &la) {
     auto frames = la.article->get_frames();
     if (la.all) {
-        os << ListArticle(la.article, la.detailed, true, true);
+        os << ListArticle(la.ctx, la.article, la.detailed, true, true);
     }
     if (la.detailed) {
         for (int i = 0; i < frames.size(); ++i) {

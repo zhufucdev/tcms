@@ -11,7 +11,7 @@
 namespace strings {
     std::string trim(const std::string &str);
 
-    std::vector<std::string> split(const std::string &str, char separator);
+    std::vector<std::string> split(const std::string &str, char separator, std::vector<std::string>::size_type limit = 0);
 
     std::string join(std::vector<std::string>::const_iterator first, std::vector<std::string>::const_iterator last, char separator = ' ');
 

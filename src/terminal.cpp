@@ -54,10 +54,12 @@ inline bool is_flag(const std::string &arg) {
 
 ReadFlags terminal::read_flags(const std::vector<std::string> &args, str_vec_size_t offset) {
     std::map<char, bool> singles;
+    std::map<std::string, bool> named;
     std::map<char, std::string> parameters;
     auto read_n = read_name(args, offset);
     while (true) {
         if (is_flag(read_n.name)) {
+            auto is_named = false;
             if (read_n.name.length() == 2 && read_n.epos < args.size()) {
                 auto flag = read_n.name[1];
                 read_n = read_name(args, read_n.epos);
@@ -67,9 +69,15 @@ ReadFlags terminal::read_flags(const std::vector<std::string> &args, str_vec_siz
                 } else {
                     read_n.name = std::string{'-', flag};
                 }
+            } else if (read_n.name.length() > 2 && read_n.name.substr(0, 2) == "--") {
+                is_named = true;
             }
-            for (auto c: read_n.name.substr(1)) {
-                singles[c] = true;
+            if (!is_named) {
+                for (auto c: read_n.name.substr(1)) {
+                    singles[c] = true;
+                }
+            } else {
+                named[read_n.name.substr(2)] = true;
             }
         }
         if (read_n.epos >= args.size()) {
@@ -77,14 +85,19 @@ ReadFlags terminal::read_flags(const std::vector<std::string> &args, str_vec_siz
         }
         read_n = read_name(args, read_n.epos);
     }
-    return {singles, parameters};
+    return {singles, named, parameters};
 }
 
-ReadFlags::ReadFlags(const std::map<char, bool> &singles, const std::map<char, std::string> &parameters)
-        : singles(singles), parameters(parameters) {}
+ReadFlags::ReadFlags(const std::map<char, bool> &singles, const std::map<std::string, bool> &named,
+                     const std::map<char, std::string> &parameters)
+        : singles(singles), named(named), parameters(parameters) {}
 
 bool ReadFlags::has_single(char flag) {
     return singles[flag];
+}
+
+bool ReadFlags::has_named(std::string name) {
+    return named[name];
 }
 
 std::string ReadFlags::get_parameter(char flag, const std::string &def) {
