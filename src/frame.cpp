@@ -20,7 +20,7 @@ unsigned char TitleFrame::get_depth() const {
 }
 
 FrameType TitleFrame::get_type() const {
-    return FrameType::PARAGRAPH;
+    return FrameType::TITLE;
 }
 
 std::string TitleFrame::to_string() const {
