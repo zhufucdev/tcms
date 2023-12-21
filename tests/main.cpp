@@ -3,6 +3,15 @@
 #include "fs.h"
 #include "metadata.h"
 #include "terminal.h"
+#include "FrameGetter.h"
+#include "ContactGetter.h"
+
+std::map<id_type, size_t> tcms::FrameGetter::rc{};
+std::map<id_type, tcms::Frame *> tcms::FrameGetter::cache{};
+
+std::map<id_type, size_t> tcms::ContactGetter::rc{};
+std::map<id_type, tcms::Contact *> tcms::ContactGetter::cache{};
+
 
 void test_language() {
     auto lang = Language::parse("zh_CN");

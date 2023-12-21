@@ -1,6 +1,7 @@
 #include "metadata.h"
 #include "language.h"
 #include "Contact.h"
+#include <stdexcept>
 
 using namespace tcms;
 
