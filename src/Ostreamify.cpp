@@ -15,7 +15,7 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const MarkdownTitle &
 }
 
 std::ostream &tcms::behavior::operator<<(std::ostream &os, const MarkdownParagraph &m) {
-    os << m.target->to_string() << '\n';
+    os << m.target->to_string() << "\n\n\n";
     return os;
 }
 
@@ -39,8 +39,26 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const PlainImage &m) 
     return os;
 }
 
-#define OStreamifyArticle(Name, Title, Para, Image) \
-std::ostream &tcms::behavior::operator<<(std::ostream &os, const Name &m) {\
+std::ostream &tcms::behavior::operator<<(std::ostream &os, const HTMLTitle &m) {
+    int depth = m.target->get_depth();
+    os << "<h" << depth << ">" << m.target->to_string() << "</h" << depth << ">\n";
+    return os;
+}
+
+std::ostream &tcms::behavior::operator<<(std::ostream &os, const HTMLParagraph &m) {
+    os << "<p>" << m.target->to_string() << "</p>\n";
+    return os;
+}
+
+std::ostream &tcms::behavior::operator<<(std::ostream &os, const HTMLImage &m) {
+    os << "<img alt=\"" << m.target->get_caption() << "\" src=\""
+       << fs::path_to_string(m.target->get_image_path()) << "\"/>\n";
+    return os;
+}
+
+#define OStreamifyArticle(Name, Prefix, Suffix, Title, Para, Image) \
+std::ostream &tcms::behavior::operator<<(std::ostream &os, const Name &m) { \
+    Prefix; \
     for (auto const &f: m.target->get_frames()) {\
         switch (f->get_type()) {\
             case TITLE:\
@@ -53,7 +71,8 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const Name &m) {\
                 os << Image(m.ctx, dynamic_cast<ImageFrame *>(f->get()));\
                 break;\
         }\
-    }\
+    } \
+    Suffix; \
     return os;\
 }
 
@@ -74,10 +93,32 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const Name &m) { \
     return os; \
 }
 
-OStreamifyArticle(MarkdownArticle, MarkdownTitle, MarkdownParagraph, MarkdownImage)
+inline void article_prefix(std::ostream &os, const std::string &title) {
+    os << R"(<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>)" << title << R"(</title>
+</head>
+<body>
+)";
+}
 
-OStreamifyArticle(PlainArticle, PlainTitle, PlainParagraph, PlainImage)
+inline void article_suffix(std::ostream &os) {
+    os << R"(</body>
+</html>
+)";
+}
+
+OStreamifyArticle(MarkdownArticle, , , MarkdownTitle, MarkdownParagraph, MarkdownImage)
+
+OStreamifyArticle(PlainArticle, , , PlainTitle, PlainParagraph, PlainImage)
+
+OStreamifyArticle(HTMLArticle, article_prefix(os, m.target->get_name()), article_suffix(os), HTMLTitle, HTMLParagraph,
+                  HTMLImage)
 
 OStreamifyFrameEle(MarkdownFrameElement, MarkdownTitle, MarkdownParagraph, MarkdownImage)
 
 OStreamifyFrameEle(PlainFrameElement, PlainTitle, PlainParagraph, PlainImage)
+
+OStreamifyFrameEle(HTMLFrameElement, HTMLTitle, HTMLParagraph, HTMLImage)

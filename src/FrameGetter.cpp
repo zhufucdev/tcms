@@ -60,6 +60,10 @@ Frame *FrameGetter::get() const {
     return frame;
 }
 
+FrameGetter *FrameGetter::clone() const {
+    return new FrameGetter(*this);
+}
+
 FrameType FrameGetter::get_type() const {
     return type;
 }
@@ -102,3 +106,6 @@ Frame *MemoryFrameGetter::get() const {
     return frame;
 }
 
+FrameGetter *MemoryFrameGetter::clone() const {
+    return new MemoryFrameGetter(*this);
+}

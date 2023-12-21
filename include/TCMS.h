@@ -199,6 +199,16 @@ namespace tcms {
         Ostreamable(Article, PlainArticle);
 
         Ostreamable(FrameElement, PlainFrameElement);
+
+        Ostreamable(TitleFrame, HTMLTitle);
+
+        Ostreamable(ParagraphFrame, HTMLParagraph);
+
+        Ostreamable(ImageFrame, HTMLImage);
+
+        Ostreamable(Article, HTMLArticle);
+
+        Ostreamable(FrameElement, HTMLFrameElement);
     }
 }
 
