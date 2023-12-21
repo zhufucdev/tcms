@@ -296,6 +296,8 @@ inline auto ls_command_handler(Context &ctx) {
                 auto target = ctx.get_current_working_element();
                 if (read_n.name.length() > 1 && read_n.name[0] != '-') {
                     target = target->resolve(read_n.name);
+                } else {
+                    read_n.epos = 1;
                 }
                 auto read_f = terminal::read_flags(args, read_n.epos);
                 os << behavior::ListInElement(
