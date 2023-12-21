@@ -73,7 +73,6 @@ namespace tcms {
 
     class ImageFrame : public Frame {
     private:
-        id_type id;
         std::string caption, extension;
 
         ImageFrame(id_type id, const std::string &caption);

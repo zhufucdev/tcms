@@ -98,7 +98,7 @@ fs::Path ImageFrame::get_image_path() const {
     if (extension.empty()) {
         return {};
     }
-    return fs::Path{"images", std::to_string(id) + extension};
+    return fs::Path{"images", std::to_string(get_id()) + extension};
 }
 
 void ImageFrame::set_file(const fs::Path &path) {
@@ -114,7 +114,7 @@ ByteArray ImageFrame::serialize() const {
     size_t len = sizeof(id_type) + 1 + sba.len;
     char *buf = (char *) calloc(len, sizeof(char));
     buf[0] = FrameType::IMAGE;
-    bytes::write_number(buf + 1, id);
+    bytes::write_number(buf + 1, get_id());
     std::memcpy(buf + 1 + sizeof(char), sba.content, sba.len);
     delete sba.content;
     return {buf, len};
