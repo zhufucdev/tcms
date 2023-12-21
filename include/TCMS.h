@@ -173,9 +173,9 @@ namespace tcms {
 
 #define Ostreamable(T, Name) \
         class Name : public Behavior { \
-            const T *target; \
+            T *target; \
         public: \
-            Name(const Context &ctx, const T *target) : target(target), Behavior(ctx) {} \
+            Name(const Context &ctx, T *target) : target(target), Behavior(ctx) {} \
             friend std::ostream &operator<<(std::ostream &os, const Name &m); \
         }
 

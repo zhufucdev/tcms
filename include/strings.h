@@ -20,7 +20,7 @@ namespace strings {
     template<typename T>
     T parse_number(const std::string &src) {
         T num = 0;
-        for (int i = src.length() - 1; i >= 0; i--) {
+        for (int i = 0; i < src.length(); ++i) {
             num *= 10;
             num += src[i] - '0';
         }
