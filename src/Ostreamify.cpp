@@ -15,7 +15,7 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const MarkdownTitle &
 }
 
 std::ostream &tcms::behavior::operator<<(std::ostream &os, const MarkdownParagraph &m) {
-    os << m.target->to_string() << '\n';
+    os << m.target->to_string() << "\n\n\n";
     return os;
 }
 

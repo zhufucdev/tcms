@@ -311,6 +311,40 @@ inline auto ls_command_handler(Context &ctx) {
     );
 }
 
+inline auto ln_command_handler(Context &ctx) {
+    return make_tuple(
+            "ln",
+            make_tuple("src", "dst", "Create a linked frame in another article"),
+            [&](auto args, auto &os, auto &es) {
+                auto read_n = terminal::read_name(args);
+                if (read_n.epos == 1) {
+                    cerr << "lacking parameter to src" << endl;
+                    return CommandResult::EMPTY;
+                } else if (read_n.epos >= args.size()) {
+                    cerr << "lacking parameter to dst" << endl;
+                    return CommandResult::EMPTY;
+                }
+                auto src_name = read_n.name;
+                read_n = terminal::read_name(args, read_n.epos);
+                std::string &dst_name = read_n.name;
+                auto src = ctx.get_current_working_element()->resolve(src_name),
+                        dst = ctx.get_current_working_element()->resolve(dst_name);
+                if (src == nullptr || src->get_type() != FRAME) {
+                    cerr << "no such frame: " << src_name << endl;
+                    return CommandResult::EMPTY;
+                }
+                if (dst == nullptr || dst->get_type() != ARTICLE) {
+                    cerr << "no such article: " << dst_name << endl;
+                    return CommandResult::EMPTY;
+                }
+                auto frame = dynamic_cast<FrameElement *>(src);
+                auto article = dynamic_cast<ArticleElement *>(dst);
+                article->get()->add_frame(frame->get()->clone());
+                return CommandResult::SUCCESS;
+            }
+    );
+}
+
 void tcms::CliClient::event_loop() {
     print_dialog("TCMS - The Content Management System", "Welcome to TCMS. Type ? for help.");
     change_work(ctx, new RootElement(ctx));
@@ -360,6 +394,7 @@ bool change_work(Context &ctx, RootElement *ele) {
                 rm_command_handler(ctx),
                 cw_command_handler(ctx),
                 cat_command_handler(ctx),
+                ln_command_handler(ctx),
                 clear_command_handler(),
                 make_tuple(
                         "q",
@@ -455,6 +490,7 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
                 ),
                 rm_command_handler(ctx),
                 cat_command_handler(ctx),
+                ln_command_handler(ctx),
                 clear_command_handler(),
                 make_tuple(
                         "q",

@@ -29,6 +29,8 @@ namespace tcms {
 
         virtual Frame *get() const;
 
+        virtual FrameGetter *clone() const;
+
         FrameType get_type() const;
 
         id_type get_id() const;
@@ -48,6 +50,8 @@ namespace tcms {
         explicit MemoryFrameGetter(Frame *frame);
 
         Frame *get() const override;
+
+        FrameGetter * clone() const override;
     };
 }
 

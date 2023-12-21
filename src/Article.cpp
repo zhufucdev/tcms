@@ -37,6 +37,11 @@ void Article::add_frame(tcms::Frame *frame) {
     this->write_to_file();
 }
 
+void Article::add_frame(tcms::FrameGetter *getter) {
+    frames.push_back(getter);
+    this->write_to_file();
+}
+
 void Article::remove_frame(tcms::FrameGetter *frame) {
     frames.erase(std::find_if(frames.begin(), frames.end(),
                               [&](auto g) { return g->get_id() == frame->get_id(); }));
