@@ -111,6 +111,7 @@ namespace tcms {
                 os << behavior::MarkdownArticle(ctx, get());
                 break;
             case HTML:
+                os << behavior::HTMLArticle(ctx, get());
                 break;
         }
     }
@@ -157,6 +158,7 @@ namespace tcms {
                 os << behavior::MarkdownFrameElement(ctx, this);
                 break;
             case HTML:
+                os << behavior::HTMLFrameElement(ctx, this);
                 break;
         }
     }
