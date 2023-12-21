@@ -100,20 +100,22 @@ inline void article_prefix(std::ostream &os, const std::string &title) {
     <meta charset="UTF-8">
     <title>)" << title << R"(</title>
 </head>
-<body>)";
+<body>
+)";
 }
 
 inline void article_suffix(std::ostream &os) {
     os << R"(</body>
-</html>)";
+</html>
+)";
 }
 
-OStreamifyArticle(MarkdownArticle, article_prefix(os, m.target->get_name()), article_suffix(os),
-                  MarkdownTitle, MarkdownParagraph, MarkdownImage)
+OStreamifyArticle(MarkdownArticle, , , MarkdownTitle, MarkdownParagraph, MarkdownImage)
 
 OStreamifyArticle(PlainArticle, , , PlainTitle, PlainParagraph, PlainImage)
 
-OStreamifyArticle(HTMLArticle, , , HTMLTitle, HTMLParagraph, HTMLImage)
+OStreamifyArticle(HTMLArticle, article_prefix(os, m.target->get_name()), article_suffix(os), HTMLTitle, HTMLParagraph,
+                  HTMLImage)
 
 OStreamifyFrameEle(MarkdownFrameElement, MarkdownTitle, MarkdownParagraph, MarkdownImage)
 
