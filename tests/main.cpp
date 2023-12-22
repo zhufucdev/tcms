@@ -5,6 +5,7 @@
 #include "terminal.h"
 #include "FrameGetter.h"
 #include "ContactGetter.h"
+#include "strings.h"
 
 std::map<id_type, size_t> tcms::FrameGetter::rc{};
 std::map<id_type, tcms::Frame *> tcms::FrameGetter::cache{};
@@ -84,11 +85,21 @@ void test_terminal() {
     test::assert_eq("terminal_read_para", "you are nerd", terminal::read_paragraph({"you", "are", "nerd"}, 0));
 }
 
+void test_strings() {
+    auto src = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam";
+    test::assert("strings_match_p",  strings::match(src, "dolor"));
+    test::assert("strings_match_n", !strings::match(src, "lorem"));
+    test::assert("strings_match_regex_p", strings::match(src, "[sadipcng]+", false, true));
+    test::assert("strings_match_regex_n", !strings::match(src, "[A-C]+", false, true));
+    test::assert("strings_ci_match_p", strings::match(src, "lOrEm", true));
+    test::assert("strings_ci_match_n", !strings::match(src, "lOrM", true));
+}
+
 int main() {
     test::run_tests({test_language, test_contact,
                      test_fs_get_extension, test_fs_list_files,
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
                      test_fs_path_covrt,
 #endif
-                     test_metadata, test_terminal});
+                     test_metadata, test_terminal, test_strings});
 }

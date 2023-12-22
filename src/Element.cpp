@@ -133,20 +133,20 @@ namespace tcms {
             case PLAIN:
                 for (auto f: get()->get_frames()) {
                     auto e = FrameElement(f, ctx);
-                    os << PlainFrameElement(e);
+                    os << PlainFrameElement(e) << '\n';
                 }
                 break;
             case MARKDOWN:
                 for (auto f: get()->get_frames()) {
                     auto e = FrameElement(f, ctx);
-                    os << MarkdownFrameElement(e);
+                    os << MarkdownFrameElement(e) << '\n';
                 }
                 break;
             case HTML:
                 html_os_prefix(os, get()->get_name());
                 for (auto f: get()->get_frames()) {
                     auto e = FrameElement(f, ctx);
-                    os << HTMLFrameElement(e);
+                    os << HTMLFrameElement(e) << '\n';
                 }
                 html_os_suffix(os);
                 break;
@@ -251,20 +251,20 @@ namespace tcms {
             case PLAIN:
                 for (auto f: get().get_tags()) {
                     auto e = TagElement(f, ctx);
-                    os << PlainTagElement(e);
+                    os << PlainTagElement(e) << '\n';
                 }
                 break;
             case MARKDOWN:
                 for (auto f: get().get_tags()) {
                     auto e = TagElement(f, ctx);
-                    os << MarkdownTagElement(e);
+                    os << MarkdownTagElement(e) << '\n';
                 }
                 break;
             case HTML:
                 html_os_prefix(os, "Metadata");
                 for (auto f: get().get_tags()) {
                     auto e = TagElement(f, ctx);
-                    os << HTMLTagElement(e);
+                    os << HTMLTagElement(e) << '\n';
                 }
                 html_os_suffix(os);
                 break;

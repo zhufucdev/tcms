@@ -26,6 +26,8 @@ namespace strings {
         }
         return num;
     }
+
+    bool match(const std::string& src, const std::string& keyword, bool ignoring_case = false, bool regex = false);
 }
 
 #endif //TCMS_STRINGS_H

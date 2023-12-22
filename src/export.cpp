@@ -16,89 +16,89 @@ std::ostream &tcms::operator<<(std::ostream &os, const MarkdownTitle &m) {
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const MarkdownParagraph &m) {
-    os << m.target.to_string() << "\n\n";
+    os << m.target.to_string() << "\n";
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const MarkdownImage &m) {
-    os << "![" << m.target.get_caption() << "](" << fs::path_to_string(m.target.get_image_path()) << ")\n\n";
+    os << "![" << m.target.get_caption() << "](" << fs::path_to_string(m.target.get_image_path()) << ")\n";
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const PlainTitle &m) {
-    os << m.target.to_string() << '\n';
+    os << m.target.to_string();
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const PlainParagraph &m) {
-    os << m.target.to_string() << '\n';
+    os << m.target.to_string();
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const PlainImage &m) {
-    os << "image (" << m.target.get_caption() << ")\n";
+    os << "image (" << m.target.get_caption() << ")";
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const HTMLTitle &m) {
     int depth = m.target.get_depth();
-    os << "<h" << depth << ">" << m.target.to_string() << "</h" << depth << ">\n";
+    os << "<h" << depth << ">" << m.target.to_string() << "</h" << depth << ">";
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const HTMLParagraph &m) {
-    os << "<p>" << m.target.to_string() << "</p>\n";
+    os << "<p>" << m.target.to_string() << "</p>";
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const HTMLImage &m) {
     os << "<img alt=\"" << m.target.get_caption() << "\" src=\""
-       << fs::path_to_string(m.target.get_image_path()) << "\"/>\n";
+       << fs::path_to_string(m.target.get_image_path()) << "\"/>";
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const tcms::PlainAuthorTag &m) {
-    os << "Author: " << m.target.to_string() << '\n';
+    os << "Author: " << m.target.to_string();
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const tcms::PlainLanguageTag &m) {
-    os << "Language: " << m.target.to_string() << '\n';
+    os << "Language: " << m.target.to_string();
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const tcms::PlainTitleTag &m) {
-    os << "Title: " << m.target.to_string() << '\n';
+    os << "Title: " << m.target.to_string();
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const tcms::HTMLAuthorTag &m) {
-    os << "<p><b>Author:</b> <i>" << m.target.to_string() << "</i></p>\n";
+    os << "<p><b>Author:</b> <i>" << m.target.to_string() << "</i></p>";
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const tcms::HTMLLanguageTag &m) {
-    os << "<p><b>Language:</b> <i>" << m.target.to_string() << "</i></p>\n";
+    os << "<p><b>Language:</b> <i>" << m.target.to_string() << "</i></p>";
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const tcms::HTMLTitleTag &m) {
-    os << "<p><b>Title:</b> <i>" << m.target.to_string() << "</i></p>\n";
+    os << "<p><b>Title:</b> <i>" << m.target.to_string() << "</i></p>";
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const tcms::MarkdownAuthorTag &m) {
-    os << "**Author:** __" << m.target.to_string() << "__\n\n";
+    os << "**Author:** __" << m.target.to_string() << "__\n";
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const tcms::MarkdownLanguageTag &m) {
-    os << "**Language:** __" << m.target.to_string() << "__\n\n";
+    os << "**Language:** __" << m.target.to_string() << "__\n";
     return os;
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const tcms::MarkdownTitleTag &m) {
-    os << "**Title:** __" << m.target.to_string() << "__\n\n";
+    os << "**Title:** __" << m.target.to_string() << "__\n";
     return os;
 }
 

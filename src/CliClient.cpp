@@ -366,6 +366,33 @@ inline auto ln_command_handler(Context &ctx) {
     );
 }
 
+template<typename Search>
+inline auto find_command_handler(Context &ctx, const string &prompt, Search s) {
+    return make_tuple(
+            "find",
+            make_tuple("keyword", "-i --ignoring-case", "-r --regex", prompt),
+            [&](auto args, auto &os, auto &es) {
+                auto read_n = terminal::read_name(args);
+                if (read_n.epos == 1) {
+                    es << "lacking argument to keyword" << endl;
+                    return CommandResult::EMPTY;
+                }
+                auto read_f = terminal::read_flags(args, read_n.epos);
+                auto ic = read_f.has_single('i') || read_f.has_named("ignoring-case"),
+                        regex = read_f.has_single('r') || read_f.has_named("regex");
+                try {
+                    auto results = s(&ctx, read_n.name, ic, regex);
+                    for (auto const &r: results) {
+                        os << r << endl;
+                    }
+                } catch (const std::runtime_error &e) {
+                    es << "error while searching: " << e.what() << endl;
+                }
+                return CommandResult::SUCCESS;
+            }
+    );
+}
+
 void tcms::CliClient::event_loop() {
     print_dialog("TCMS - The Content Management System", "Welcome to TCMS. Type ? for help.");
     change_work(ctx, new RootElement(ctx));
@@ -414,6 +441,26 @@ bool change_work(Context &ctx, RootElement *ele) {
                 ),
                 rm_command_handler(ctx),
                 cw_command_handler(ctx),
+                find_command_handler(ctx, "Search for an article", [&](auto ctx, auto k, auto ic, auto r) {
+                    vector<string> results;
+                    for (auto article: ctx->articles) {
+                        auto name = article->get_name();
+                        if (strings::match(name, k, ic, r)) {
+                            results.push_back(name);
+                        } else {
+                            for (auto tag : article->get_metadata().get_tags()) {
+                                if (strings::match(tag->to_string(), k, ic, r)) {
+                                    stringstream ss;
+                                    auto ele = TagElement(tag, *ctx);
+                                    ss << name << " (" << PlainTagElement(ele) << ")";
+                                    results.push_back(ss.str());
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    return results;
+                }),
                 cat_command_handler(ctx),
                 ln_command_handler(ctx),
                 clear_command_handler(),
