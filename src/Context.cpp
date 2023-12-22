@@ -14,8 +14,7 @@ namespace tcms {
             }
             auto ba = fs::read_file(file);
             try {
-                auto article = Article::deserialize(ba);
-                articles.push_back(article);
+                articles.push_back(Article::deserialize(ba));
             } catch (const std::exception &any) {
                 std::cerr << "Error while reading " << fs::path_to_string(file) << ": "
                           << any.what() << std::endl;
@@ -24,9 +23,6 @@ namespace tcms {
     }
 
     Context::~Context() {
-        for (auto a: articles) {
-            delete a;
-        }
     }
 
     void Context::alter_cwe(tcms::Element *new_cwe) {

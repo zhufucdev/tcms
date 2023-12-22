@@ -438,23 +438,25 @@ bool change_work(Context &ctx, RootElement *ele) {
                 ),
                 rm_command_handler(ctx),
                 cw_command_handler(ctx),
-                find_command_handler<Context &>(ctx, "Search for an article",
-                                                [&](auto &ctx, auto &os, auto &k, auto ic, auto r) {
-                                                    for (auto article: ctx.articles) {
-                                                        auto name = article->get_name();
-                                                        if (strings::match(name, k, ic, r)) {
-                                                            os << name << '\n';
-                                                        } else {
-                                                            for (auto tag: article->get_metadata().get_tags()) {
-                                                                if (strings::match(tag->to_string(), k, ic, r)) {
-                                                                    auto ele = TagElement(tag, ctx);
-                                                                    os << name << " (" << PlainTagElement(ele) << ")\n";
-                                                                    break;
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }),
+                find_command_handler<Context &>(
+                        ctx, "Search for an article",
+                        [&](auto &ctx, auto &os, auto &k, auto ic, auto r) {
+                            for (auto const &article: ctx.articles) {
+                                auto name = article->get_name();
+                                if (strings::match(name, k, ic, r)) {
+                                    os << name << '\n';
+                                } else {
+                                    for (auto tag: article->get_metadata().get_tags()) {
+                                        if (strings::match(tag->to_string(), k, ic, r)) {
+                                            auto ele = TagElement(tag, ctx);
+                                            os << name << " (" << PlainTagElement(ele) << ")\n";
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                ),
                 cat_command_handler(ctx),
                 ln_command_handler(ctx),
                 clear_command_handler(),
@@ -553,14 +555,17 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
                 rm_command_handler(ctx),
                 cat_command_handler(ctx),
                 ln_command_handler(ctx),
-                find_command_handler<Article &>(*article, "Search for a frame", [&](auto &a, auto &os, auto &k, auto ic, auto r) {
-                    for (auto f: a.get_frames()) {
-                        if (strings::match(f->get()->to_string(), k, ic, r)) {
-                            os << f->get_id() << '\t';
+                find_command_handler<Article &>(
+                        *article, "Search for a frame",
+                        [&](auto &a, auto &os, auto &k, auto ic, auto r) {
+                            for (auto f: a.get_frames()) {
+                                if (strings::match(f->get()->to_string(), k, ic, r)) {
+                                    os << f->get_id() << '\t';
+                                }
+                            }
+                            os << '\n';
                         }
-                    }
-                    os << '\n';
-                }),
+                ),
                 clear_command_handler(),
                 quit_command_handler(ctx),
                 quit_anyway_command_handler(ctx)
