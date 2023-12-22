@@ -366,8 +366,8 @@ inline auto ln_command_handler(Context &ctx) {
     );
 }
 
-template<typename Search>
-inline auto find_command_handler(Context &ctx, const string &prompt, Search s) {
+template<typename Search, typename Capture>
+inline auto find_command_handler(Capture &capture, const string &prompt, Search s) {
     return make_tuple(
             "find",
             make_tuple("keyword", "-i --ignoring-case", "-r --regex", prompt),
@@ -381,10 +381,7 @@ inline auto find_command_handler(Context &ctx, const string &prompt, Search s) {
                 auto ic = read_f.has_single('i') || read_f.has_named("ignoring-case"),
                         regex = read_f.has_single('r') || read_f.has_named("regex");
                 try {
-                    auto results = s(&ctx, read_n.name, ic, regex);
-                    for (auto const &r: results) {
-                        os << r << endl;
-                    }
+                    s(capture, os, read_n.name, ic, regex);
                 } catch (const std::runtime_error &e) {
                     es << "error while searching: " << e.what() << endl;
                 }
@@ -441,25 +438,21 @@ bool change_work(Context &ctx, RootElement *ele) {
                 ),
                 rm_command_handler(ctx),
                 cw_command_handler(ctx),
-                find_command_handler(ctx, "Search for an article", [&](auto ctx, auto k, auto ic, auto r) {
-                    vector<string> results;
-                    for (auto article: ctx->articles) {
+                find_command_handler(ctx, "Search for an article", [&](auto &ctx, auto &os, auto k, auto ic, auto r) {
+                    for (auto article: ctx.articles) {
                         auto name = article->get_name();
                         if (strings::match(name, k, ic, r)) {
-                            results.push_back(name);
+                            os << name << '\n';
                         } else {
-                            for (auto tag : article->get_metadata().get_tags()) {
+                            for (auto tag: article->get_metadata().get_tags()) {
                                 if (strings::match(tag->to_string(), k, ic, r)) {
-                                    stringstream ss;
-                                    auto ele = TagElement(tag, *ctx);
-                                    ss << name << " (" << PlainTagElement(ele) << ")";
-                                    results.push_back(ss.str());
+                                    auto ele = TagElement(tag, ctx);
+                                    os << name << " (" << PlainTagElement(ele) << ")\n";
                                     break;
                                 }
                             }
                         }
                     }
-                    return results;
                 }),
                 cat_command_handler(ctx),
                 ln_command_handler(ctx),
@@ -559,6 +552,14 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
                 rm_command_handler(ctx),
                 cat_command_handler(ctx),
                 ln_command_handler(ctx),
+                find_command_handler(article, "Search for a frame", [&](auto &a, auto &os, auto k, auto ic, auto r) {
+                    for (auto f: a->get_frames()) {
+                        if (strings::match(f->get()->to_string(), k, ic, r)) {
+                            os << f->get_id() << '\t';
+                        }
+                    }
+                    os << '\n';
+                }),
                 clear_command_handler(),
                 quit_command_handler(ctx),
                 quit_anyway_command_handler(ctx)
@@ -672,12 +673,14 @@ bool change_work(Context &ctx, Metadata &metadata, MetadataElement *ele) {
 }
 
 bool change_work(Context &ctx, Element *we) {
-    ctx.alter_cwe(we);
     if (auto r = dynamic_cast<RootElement *>(we)) {
+        ctx.alter_cwe(we);
         return change_work(ctx, r);
     } else if (auto a = dynamic_cast<ArticleElement *>(we)) {
+        ctx.alter_cwe(we);
         return change_work(ctx, a->get(), a);
     } else if (auto m = dynamic_cast<MetadataElement *>(we)) {
+        ctx.alter_cwe(we);
         return change_work(ctx, m->get(), m);
     }
     return false;

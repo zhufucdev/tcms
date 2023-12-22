@@ -168,17 +168,14 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInElement &
             os << ListInArticle(le.ctx, dynamic_cast<const ArticleElement *>(le.element)->get(), le.detailed, le.all,
                                 le.type);
             break;
-        case FRAME:
-            os << "." << std::endl;
-            break;
-        case CONTACT:
-            os << "idk" << std::endl;
-            break;
         case METADATA:
             os << ListInMetadata(le.ctx, dynamic_cast<const MetadataElement *>(le.element)->get(), le.detailed, le.all,
                                  le.type);
             break;
+        case FRAME:
+        case CONTACT:
         case TAG:
+            os << "." << std::endl;
             break;
     }
     return os;
