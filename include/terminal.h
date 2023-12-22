@@ -18,8 +18,10 @@ namespace terminal {
         std::map<std::string, bool> named;
         std::map<char, std::string> parameters;
     public:
+        const str_vec_size_t epos;
+
         ReadFlags(const std::map<char, bool> &singles, const std::map<std::string, bool> &named,
-                  const std::map<char, std::string> &parameters);
+                  const std::map<char, std::string> &parameters, str_vec_size_t epos);
 
         bool has_single(char flag);
 

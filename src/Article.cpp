@@ -30,15 +30,31 @@ std::vector<FrameGetter *> Article::get_frames() const {
     return frames;
 }
 
-void Article::add_frame(tcms::Frame *frame) {
+void Article::add_frame(tcms::Frame *frame, id_type after) {
     auto mfg = new MemoryFrameGetter(frame);
-    frames.push_back(mfg);
+    add_frame(mfg, after);
     mfg->write_to_file();
     this->write_to_file();
 }
 
-void Article::add_frame(tcms::FrameGetter *getter) {
-    frames.push_back(getter);
+void Article::add_frame(tcms::FrameGetter *getter, id_type after) {
+    if (after < 0) {
+        frames.push_back(getter);
+    } else if (after == 0) {
+        frames.insert(frames.begin(), getter);
+    } else {
+        auto inserted = false;
+        for (int i = 0; i < frames.size(); ++i) {
+            if (frames[i]->get_id() == after) {
+                frames.insert(frames.begin() + i + 1, getter);
+                inserted = true;
+                break;
+            }
+        }
+        if (!inserted) {
+            throw std::runtime_error("no element to insert after");
+        }
+    }
     this->write_to_file();
 }
 

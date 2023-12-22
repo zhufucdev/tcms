@@ -62,41 +62,43 @@ ReadFlags terminal::read_flags(const std::vector<std::string> &args, str_vec_siz
     std::map<char, bool> singles;
     std::map<std::string, bool> named;
     std::map<char, std::string> parameters;
+    str_vec_size_t epos = offset;
     auto read_n = read_name(args, offset);
-    while (true) {
-        if (is_flag(read_n.name)) {
-            auto is_named = false;
-            if (read_n.name.length() == 2 && read_n.epos < args.size()) {
-                auto flag = read_n.name[1];
+    while (is_flag(read_n.name)) {
+        auto is_named = false;
+        if (read_n.name.length() == 2 && read_n.epos < args.size()) {
+            auto flag = read_n.name[1];
+            read_n = read_name(args, read_n.epos);
+            if (!is_flag(read_n.name)) {
+                parameters[flag] = read_n.name;
+                epos = read_n.epos;
                 read_n = read_name(args, read_n.epos);
-                if (!is_flag(read_n.name)) {
-                    parameters[flag] = read_n.name;
-                    continue;
-                } else {
-                    read_n.name = std::string{'-', flag};
-                }
-            } else if (read_n.name.length() > 2 && read_n.name.substr(0, 2) == "--") {
-                is_named = true;
-            }
-            if (!is_named) {
-                for (auto c: read_n.name.substr(1)) {
-                    singles[c] = true;
-                }
+                continue;
             } else {
-                named[read_n.name.substr(2)] = true;
+                read_n.name = std::string{'-', flag};
             }
+        } else if (read_n.name.length() > 2 && read_n.name.substr(0, 2) == "--") {
+            is_named = true;
         }
+        if (!is_named) {
+            for (auto c: read_n.name.substr(1)) {
+                singles[c] = true;
+            }
+        } else {
+            named[read_n.name.substr(2)] = true;
+        }
+        epos = read_n.epos;
         if (read_n.epos >= args.size()) {
             break;
         }
         read_n = read_name(args, read_n.epos);
     }
-    return {singles, named, parameters};
+    return {singles, named, parameters, epos};
 }
 
 ReadFlags::ReadFlags(const std::map<char, bool> &singles, const std::map<std::string, bool> &named,
-                     const std::map<char, std::string> &parameters)
-        : singles(singles), named(named), parameters(parameters) {}
+                     const std::map<char, std::string> &parameters, str_vec_size_t epos)
+        : singles(singles), named(named), parameters(parameters), epos(epos) {}
 
 bool ReadFlags::has_single(char flag) {
     return singles[flag];

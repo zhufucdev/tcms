@@ -494,60 +494,85 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
                 cw_command_handler(ctx),
                 make_tuple(
                         "h",
-                        make_tuple("-d depth", "title...", "Append a title (with depth)"),
+                        make_tuple("-d depth", "-A after", "title...", "Append a title, optionally with depth"),
                         [&](auto args, auto &os, auto &es) {
-                            int depth = 1;
-                            vector<string>::size_type offset = 1;
-                            if (args[1] == "-d") {
-                                if (args.size() < 3) {
-                                    es << "lacking parameter to depth";
-                                    return CommandResult::EMPTY;
-                                }
-                                depth = strings::parse_number<int>(args[2]);
-                                offset = 3;
+                            auto read_f = terminal::read_flags(args);
+                            int depth = strings::parse_number<int>(read_f.get_parameter('d', "1")),
+                                    after = strings::parse_number<int>(read_f.get_parameter('A', "-1"));
+                            if (depth <= 0 || depth >= 0xff) {
+                                es << "invalid depth" << endl;
+                                return CommandResult::EMPTY;
                             }
-                            if (args.size() <= offset) {
+
+                            if (args.size() <= read_f.epos) {
                                 es << "lack parameter to title content" << endl;
                                 return CommandResult::EMPTY;
                             }
 
-                            article->add_frame(new TitleFrame(terminal::read_paragraph(args, offset), depth));
-                            return CommandResult::SUCCESS;
+                            try {
+                                article->add_frame(
+                                        new TitleFrame(terminal::read_paragraph(args, read_f.epos), depth),
+                                        after
+                                );
+                                return CommandResult::SUCCESS;
+                            } catch (const std::runtime_error &e) {
+                                es << e.what() << endl;
+                                return CommandResult::EMPTY;
+                            }
                         }
                 ),
                 make_tuple(
                         "p",
-                        make_tuple("paragraph...", "Append a paragraph"),
+                        make_tuple("-A after", "paragraph...", "Append a paragraph"),
                         [&](auto args, auto &os, auto &es) {
-                            if (args.size() < 2) {
+                            auto read_f = terminal::read_flags(args);
+                            if (read_f.epos >= args.size()) {
                                 es << "lack parameter to paragraph content" << endl;
                                 return CommandResult::EMPTY;
                             } else {
-                                article->add_frame(new ParagraphFrame(terminal::read_paragraph(args)));
-                                return CommandResult::SUCCESS;
+                                int after = strings::parse_number<int>(read_f.get_parameter('A', "-1"));
+                                try {
+                                    article->add_frame(new ParagraphFrame(terminal::read_paragraph(args, read_f.epos)),
+                                                       after);
+                                    return CommandResult::SUCCESS;
+                                } catch (const std::runtime_error &e) {
+                                    es << e.what() << endl;
+                                    return CommandResult::EMPTY;
+                                }
                             }
                         }
                 ),
                 make_tuple(
                         "i",
-                        make_tuple("caption", "file", "Append an image"),
+                        make_tuple("-A after", "caption", "file", "Append an image"),
                         [&](auto args, auto &os, auto &es) {
-                            auto read = terminal::read_name(args);
-                            if (read.epos >= args.size()) {
-                                article->add_frame(new ImageFrame(read.name));
-                            } else if (read.epos > 1) {
-                                auto i = new ImageFrame(read.name);
-                                read = terminal::read_name(args, read.epos);
-                                try {
-                                    i->set_file(fs::string_to_path(read.name));
-                                } catch (const std::runtime_error &e) {
-                                    es << e.what() << endl;
-                                    return CommandResult::EMPTY;
-                                }
-                                article->add_frame(i);
-                            } else {
-                                es << "lack parameter to image caption";
+                            auto read_f = terminal::read_flags(args);
+                            auto read_n = terminal::read_name(args, read_f.epos);
+                            if (read_n.epos == read_f.epos) {
+                                es << "lack parameter to image caption" << endl;
                                 return CommandResult::EMPTY;
+                            } else {
+                                auto read_nf = terminal::read_name(args, read_n.epos);
+                                if (read_nf.epos == read_n.epos) {
+                                    es << "lack parameter to image file" << endl;
+                                    return CommandResult::EMPTY;
+                                } else {
+                                    auto i = new ImageFrame(read_n.name);
+                                    read_n = terminal::read_name(args, read_n.epos);
+                                    try {
+                                        i->set_file(fs::string_to_path(read_nf.name));
+                                    } catch (const std::runtime_error &e) {
+                                        es << e.what() << endl;
+                                        return CommandResult::EMPTY;
+                                    }
+                                    auto after = strings::parse_number<int>(read_f.get_parameter('A', "-1"));
+                                    try {
+                                        article->add_frame(i, after);
+                                    } catch (const std::runtime_error &e) {
+                                        es << e.what() << endl;
+                                        return CommandResult::EMPTY;
+                                    }
+                                }
                             }
                             return CommandResult::SUCCESS;
                         }

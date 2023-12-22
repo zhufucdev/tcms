@@ -32,9 +32,9 @@ namespace tcms {
 
         std::vector<FrameGetter *> get_frames() const;
 
-        void add_frame(Frame *frame);
+        void add_frame(Frame *frame, id_type after = -1);
 
-        void add_frame(FrameGetter *getter);
+        void add_frame(FrameGetter *getter, id_type after = -1);
 
         void remove_frame(FrameGetter *frame);
 
