@@ -7,40 +7,48 @@ namespace tcms {
 
 #define Ostreamable(T, Name) \
         class Name { \
-            T *target; \
+            T target; \
         public: \
-            explicit Name(T *target) : target(target) {} \
+            explicit Name(T target) : target(target) {} \
             friend std::ostream &operator<<(std::ostream &os, const Name &m); \
         }
 
 
-    Ostreamable(TitleFrame, MarkdownTitle);
+    Ostreamable(TitleFrame &, MarkdownTitle);
 
-    Ostreamable(ParagraphFrame, MarkdownParagraph);
+    Ostreamable(ParagraphFrame &, MarkdownParagraph);
 
-    Ostreamable(ImageFrame, MarkdownImage);
+    Ostreamable(ImageFrame &, MarkdownImage);
 
-    Ostreamable(TitleFrame, PlainTitle);
+    Ostreamable(TitleFrame &, PlainTitle);
 
-    Ostreamable(ParagraphFrame, PlainParagraph);
+    Ostreamable(ParagraphFrame &, PlainParagraph);
 
-    Ostreamable(ImageFrame, PlainImage);
+    Ostreamable(ImageFrame &, PlainImage);
 
-    Ostreamable(TitleFrame, HTMLTitle);
+    Ostreamable(TitleFrame &, HTMLTitle);
 
-    Ostreamable(ParagraphFrame, HTMLParagraph);
+    Ostreamable(ParagraphFrame &, HTMLParagraph);
 
-    Ostreamable(ImageFrame, HTMLImage);
+    Ostreamable(ImageFrame &, HTMLImage);
 
-    Ostreamable(AuthorTag, PlainAuthorTag);
+    Ostreamable(AuthorTag &, PlainAuthorTag);
 
-    Ostreamable(LanguageTag, PlainLanguageTag);
+    Ostreamable(LanguageTag &, PlainLanguageTag);
 
-    Ostreamable(TitleTag, PlainTitleTag);
+    Ostreamable(TitleTag &, PlainTitleTag);
 
-    Ostreamable(AuthorTag, HTMLAuthorTag);
+    Ostreamable(AuthorTag &, HTMLAuthorTag);
 
-    Ostreamable(LanguageTag, HTMLLanguageTag);
+    Ostreamable(LanguageTag &, HTMLLanguageTag);
+
+    Ostreamable(TitleTag &, HTMLTitleTag);
+
+    Ostreamable(AuthorTag &, MarkdownAuthorTag);
+
+    Ostreamable(LanguageTag &, MarkdownLanguageTag);
+
+    Ostreamable(TitleTag &, MarkdownTitleTag);
 
 }
 #endif //TCMS_EXPORT_H

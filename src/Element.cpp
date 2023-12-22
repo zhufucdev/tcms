@@ -111,33 +111,44 @@ namespace tcms {
         return nullptr;
     }
 
+    void html_os_prefix(std::ostream &os, const std::string &title) {
+        os << R"(<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>)" << title << R"(</title>
+</head>
+<body>
+)";
+    }
+
+    void html_os_suffix(std::ostream &os) {
+        os << R"(</body>
+</html>
+)";
+    }
+
     void ArticleElement::output(std::ostream &os, tcms::ExportVariant variant) {
         switch (variant) {
             case PLAIN:
                 for (auto f: get()->get_frames()) {
-                    os << PlainFrameElement(new FrameElement(f, ctx));
+                    auto e = FrameElement(f, ctx);
+                    os << PlainFrameElement(e);
                 }
                 break;
             case MARKDOWN:
                 for (auto f: get()->get_frames()) {
-                    os << MarkdownFrameElement(new FrameElement(f, ctx));
+                    auto e = FrameElement(f, ctx);
+                    os << MarkdownFrameElement(e);
                 }
                 break;
             case HTML:
-                os << R"(<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>)" << get()->get_name() << R"(</title>
-</head>
-<body>
-)";
+                html_os_prefix(os, get()->get_name());
                 for (auto f: get()->get_frames()) {
-                    os << HTMLFrameElement(new FrameElement(f, ctx));
+                    auto e = FrameElement(f, ctx);
+                    os << HTMLFrameElement(e);
                 }
-                os << R"(</body>
-</html>
-)";
+                html_os_suffix(os);
                 break;
         }
     }
@@ -187,13 +198,13 @@ namespace tcms {
     void FrameElement::output(std::ostream &os, tcms::ExportVariant variant) {
         switch (variant) {
             case PLAIN:
-                os << PlainFrameElement(this);
+                os << PlainFrameElement(*this);
                 break;
             case MARKDOWN:
-                os << MarkdownFrameElement(this);
+                os << MarkdownFrameElement(*this);
                 break;
             case HTML:
-                os << HTMLFrameElement(this);
+                os << HTMLFrameElement(*this);
                 break;
         }
     }
@@ -236,7 +247,28 @@ namespace tcms {
     }
 
     void MetadataElement::output(std::ostream &os, tcms::ExportVariant variant) {
-
+        switch (variant) {
+            case PLAIN:
+                for (auto f: get().get_tags()) {
+                    auto e = TagElement(f, ctx);
+                    os << PlainTagElement(e);
+                }
+                break;
+            case MARKDOWN:
+                for (auto f: get().get_tags()) {
+                    auto e = TagElement(f, ctx);
+                    os << MarkdownTagElement(e);
+                }
+                break;
+            case HTML:
+                html_os_prefix(os, "Metadata");
+                for (auto f: get().get_tags()) {
+                    auto e = TagElement(f, ctx);
+                    os << HTMLTagElement(e);
+                }
+                html_os_suffix(os);
+                break;
+        }
     }
 
     bool MetadataElement::operator==(const tcms::Element *other) {
@@ -296,7 +328,16 @@ namespace tcms {
     }
 
     void TagElement::output(std::ostream &os, tcms::ExportVariant variant) {
-        os << get()->to_string();
+        switch (variant) {
+            case PLAIN:
+                os << PlainTagElement(*this);
+                break;
+            case MARKDOWN:
+                os << MarkdownTagElement(*this);
+                break;
+            case HTML:
+                os << HTMLTagElement(*this);
+                break;
+        }
     }
-
 }

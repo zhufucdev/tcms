@@ -179,7 +179,8 @@ namespace tcms {
             const unsigned char type;
 
         public:
-            ListInMetadata(const Context &ctx, const Metadata &metadata, bool detailed, bool all, unsigned char type_filer);
+            ListInMetadata(const Context &ctx, const Metadata &metadata, bool detailed, bool all,
+                           unsigned char type_filer);
 
             friend std::ostream &operator<<(std::ostream &os, const ListInMetadata &lm);
         };
@@ -198,12 +199,17 @@ namespace tcms {
 
     }
 
-    Ostreamable(FrameElement, MarkdownFrameElement);
+    Ostreamable(FrameElement &, MarkdownFrameElement);
 
-    Ostreamable(FrameElement, PlainFrameElement);
+    Ostreamable(FrameElement &, PlainFrameElement);
 
-    Ostreamable(FrameElement, HTMLFrameElement);
+    Ostreamable(FrameElement &, HTMLFrameElement);
 
+    Ostreamable(TagElement &, PlainTagElement);
+
+    Ostreamable(TagElement &, HTMLTagElement);
+
+    Ostreamable(TagElement &, MarkdownTagElement);
 }
 
 #endif
