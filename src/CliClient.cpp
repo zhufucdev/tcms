@@ -223,7 +223,7 @@ inline auto cw_command_handler(Context &ctx) {
 inline auto cat_command_handler(Context &ctx) {
     return make_tuple(
             "cat",
-            make_tuple("name", "--markdown", "--html", "Print an element, optionally in given variant"),
+            make_tuple("name", "-m --markdown", "-h --html", "Print an element, optionally in given variant"),
             [&](auto args, auto &os, auto &es) {
                 auto read_n = terminal::read_name(args);
                 if (read_n.epos < args.size() - 1) {
@@ -237,9 +237,9 @@ inline auto cat_command_handler(Context &ctx) {
                     } else {
                         auto read_f = terminal::read_flags(args, read_n.epos);
                         ExportVariant variant = PLAIN;
-                        if (read_f.has_named("markdown")) {
+                        if (read_f.has_single('m') || read_f.has_named("markdown")) {
                             variant = MARKDOWN;
-                        } else if (read_f.has_named("html")) {
+                        } else if (read_f.has_single('h') || read_f.has_named("html")) {
                             variant = HTML;
                         }
                         try {
