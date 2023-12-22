@@ -583,7 +583,7 @@ bool change_work(Context &ctx, Metadata &metadata, MetadataElement *ele) {
                 ),
                 make_tuple(
                         "a",
-                        make_tuple("names...", "Create a author tag"),
+                        make_tuple("names...", "-l name", "Create or link an author tag"),
                         [&](auto args, auto &os, auto &es) {
                             auto read_n = terminal::read_name(args);
                             if (read_n.epos == 1) {
@@ -614,6 +614,7 @@ bool change_work(Context &ctx, Metadata &metadata, MetadataElement *ele) {
                         }
                 ),
                 rm_command_handler(ctx),
+                cat_command_handler(ctx),
                 quit_command_handler(ctx),
                 quit_anyway_command_handler(ctx)
         );

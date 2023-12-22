@@ -114,13 +114,30 @@ namespace tcms {
     void ArticleElement::output(std::ostream &os, tcms::ExportVariant variant) {
         switch (variant) {
             case PLAIN:
-                os << PlainArticle(get());
+                for (auto f: get()->get_frames()) {
+                    os << PlainFrameElement(new FrameElement(f, ctx));
+                }
                 break;
             case MARKDOWN:
-                os << MarkdownArticle(get());
+                for (auto f: get()->get_frames()) {
+                    os << MarkdownFrameElement(new FrameElement(f, ctx));
+                }
                 break;
             case HTML:
-                os << HTMLArticle(get());
+                os << R"(<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>)" << get()->get_name() << R"(</title>
+</head>
+<body>
+)";
+                for (auto f: get()->get_frames()) {
+                    os << HTMLFrameElement(new FrameElement(f, ctx));
+                }
+                os << R"(</body>
+</html>
+)";
                 break;
         }
     }

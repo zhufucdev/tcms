@@ -20,15 +20,11 @@ namespace tcms {
 
     Ostreamable(ImageFrame, MarkdownImage);
 
-    Ostreamable(Article, MarkdownArticle);
-
     Ostreamable(TitleFrame, PlainTitle);
 
     Ostreamable(ParagraphFrame, PlainParagraph);
 
     Ostreamable(ImageFrame, PlainImage);
-
-    Ostreamable(Article, PlainArticle);
 
     Ostreamable(TitleFrame, HTMLTitle);
 
@@ -36,7 +32,15 @@ namespace tcms {
 
     Ostreamable(ImageFrame, HTMLImage);
 
-    Ostreamable(Article, HTMLArticle);
+    Ostreamable(AuthorTag, PlainAuthorTag);
+
+    Ostreamable(LanguageTag, PlainLanguageTag);
+
+    Ostreamable(TitleTag, PlainTitleTag);
+
+    Ostreamable(AuthorTag, HTMLAuthorTag);
+
+    Ostreamable(LanguageTag, HTMLLanguageTag);
 
 }
 #endif //TCMS_EXPORT_H
