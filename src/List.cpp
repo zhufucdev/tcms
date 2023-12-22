@@ -55,6 +55,7 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInArticle &
     auto frames = la.article->get_frames();
     if (la.all) {
         os << ListArticle(la.ctx, la.article, la.detailed, true, true);
+        os << ListMetadata(la.ctx, const_cast<Article *>(la.article)->get_metadata(), la.detailed, false);
     }
     if (la.detailed) {
         for (int i = 0; i < frames.size(); ++i) {
@@ -64,7 +65,7 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInArticle &
                 continue;
             }
             switch (type) {
-                case TITLE:
+                case HEADER:
                     os << "header";
                     break;
                 case PARAGRAPH:
@@ -93,6 +94,67 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInArticle &
     return os;
 }
 
+ListMetadata::ListMetadata(const tcms::Context &ctx, const tcms::Metadata &metadata, bool detailed, bool dot_name)
+        : Behavior(ctx), metadata(metadata), detailed(detailed), dot_name(dot_name) {}
+
+std::ostream &tcms::behavior::operator<<(std::ostream &os, const tcms::behavior::ListMetadata &lm) {
+    if (lm.detailed) {
+        os << "nid\t";
+    }
+    if (lm.dot_name) {
+        os << ".";
+    } else {
+        os << ".metadata";
+    }
+    if (lm.detailed) {
+        auto tags = lm.metadata.get_tags().size();
+        os << '\t' << tags << " tag";
+        if (tags > 1) {
+            os << 's';
+        }
+        os << '\n';
+    } else {
+        os << '\t';
+    }
+    return os;
+}
+
+ListInMetadata::ListInMetadata(const tcms::Context &ctx, const tcms::Metadata &metadata, bool detailed, bool all,
+                               unsigned char type_filer)
+        : Behavior(ctx), metadata(metadata), detailed(detailed), all(all), type(type_filer) {}
+
+std::ostream &tcms::behavior::operator<<(std::ostream &os, const tcms::behavior::ListInMetadata &la) {
+    if (la.all) {
+        os << ListMetadata(la.ctx, la.metadata, la.detailed, true);
+    }
+    auto tags = la.metadata.get_tags();
+    if (la.detailed) {
+        for (int i = 0; i < tags.size(); i++) {
+            os << i << '\t';
+            switch (tags[i]->get_type()) {
+                case LANG:
+                    os << "lang";
+                    break;
+                case AUTHOR:
+                    os << "author";
+                    break;
+                case TITLE:
+                    os << "title";
+                    break;
+            }
+            os << '\t' << tags[i]->to_string();
+            if (i < tags.size() - 1) {
+                os << '\n';
+            }
+        }
+    } else {
+        for (int i = 0; i < tags.size(); ++i) {
+            os << i << '\t';
+        }
+    }
+    return os;
+}
+
 ListInElement::ListInElement(const tcms::Context &ctx, const tcms::Element *ele, bool detailed, bool all,
                              unsigned char type_filter)
         : Behavior(ctx), element(ele), detailed(detailed), all(all), type(type_filter) {}
@@ -111,6 +173,12 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const ListInElement &
             break;
         case CONTACT:
             os << "idk" << std::endl;
+            break;
+        case METADATA:
+            os << ListInMetadata(le.ctx, dynamic_cast<const MetadataElement *>(le.element)->get(), le.detailed, le.all,
+                                 le.type);
+            break;
+        case TAG:
             break;
     }
     return os;

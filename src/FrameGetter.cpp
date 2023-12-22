@@ -44,7 +44,7 @@ Frame *FrameGetter::get() const {
     auto ba = fs::read_file(get_path());
     Frame *frame;
     switch (type) {
-        case FrameType::TITLE:
+        case FrameType::HEADER:
             frame = TitleFrame::deserialize(ba);
             break;
         case FrameType::PARAGRAPH:

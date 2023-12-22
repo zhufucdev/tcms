@@ -10,7 +10,7 @@
 
 namespace tcms {
     enum FrameType {
-        TITLE = 0b00000001,
+        HEADER = 0b00000001,
         PARAGRAPH = 0b00000010,
         IMAGE = 0b00000100,
     };

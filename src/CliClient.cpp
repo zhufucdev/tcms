@@ -2,17 +2,14 @@
 #include "fs.h"
 #include "strings.h"
 #include "terminal.h"
-#include "find.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 using namespace std;
 using namespace tcms;
 
-/* Initialization */
 CliClient::CliClient(Context &ctx) : ctx(ctx) {}
-
-/* Command logic */
 
 enum CommandResult {
     SUCCESS = 0,
@@ -180,6 +177,28 @@ inline auto clear_command_handler() {
     );
 }
 
+inline auto quit_command_handler(Context &ctx) {
+    return make_tuple(
+            "q",
+            make_tuple("Stop working on this element"),
+            [&](auto args, auto &os, auto &es) {
+                ctx.alter_cwe(ctx.get_current_working_element()->parent);
+                return CommandResult::SUCCESS;
+            }
+    );
+}
+
+inline auto quit_anyway_command_handler(Context &ctx) {
+    return make_tuple(
+            "q!",
+            make_tuple("Exit the program anyway"),
+            [&](auto args, auto &os, auto &es) {
+                ctx.alter_cwe(nullptr);
+                return CommandResult::SUCCESS;
+            }
+    );
+}
+
 inline auto cw_command_handler(Context &ctx) {
     return make_tuple(
             "cw",
@@ -190,12 +209,12 @@ inline auto cw_command_handler(Context &ctx) {
                     es << "lacking parameter to element name" << endl;
                     return CommandResult::EMPTY;
                 }
-                auto article = ctx.get_current_working_element()->resolve(read.name);
-                if (article == nullptr) {
+                auto ele = ctx.get_current_working_element()->resolve(read.name);
+                if (ele == nullptr) {
                     es << "no such element: " << read.name << endl;
                     return CommandResult::EMPTY;
                 } else {
-                    return change_work(ctx, article) ? CommandResult::SUCCESS : CommandResult::FAILURE;
+                    return change_work(ctx, ele) ? CommandResult::SUCCESS : CommandResult::FAILURE;
                 }
             }
     );
@@ -266,7 +285,7 @@ inline auto rm_command_handler(Context &ctx) {
 inline unsigned char frame_filter_by_char(char c) {
     switch (c) {
         case 'h':
-            return FrameType::TITLE;
+            return FrameType::HEADER;
         case 'p':
             return FrameType::PARAGRAPH;
         case 'i':
@@ -289,7 +308,7 @@ inline unsigned char frame_filter_by_str(const std::string &str) {
 inline auto ls_command_handler(Context &ctx) {
     return make_tuple(
             "ls",
-            make_tuple("pattern", "-l", "-a", "-t type", "-m",
+            make_tuple("name", "-l", "-a", "-t type", "-m",
                        "List matching articles, frames or contacts"),
             [&](auto args, auto &os, auto &es) {
                 auto read_n = terminal::read_name(args);
@@ -494,22 +513,109 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
                 cat_command_handler(ctx),
                 ln_command_handler(ctx),
                 clear_command_handler(),
+                quit_command_handler(ctx),
+                quit_anyway_command_handler(ctx)
+        );
+
+        default_command_result_handler(res, cmd);
+    }
+    return true;
+}
+
+void save_within_article(Article *a, ostream &es) {
+    if (a != nullptr) {
+        a->write_to_file();
+    } else {
+        es << "warning: orphaned metadata element, your progress will not be saved" << endl;
+    }
+}
+
+bool change_work(Context &ctx, Metadata &metadata, MetadataElement *ele) {
+    cout << "\n\n";
+
+    Article *parent = nullptr;
+
+    {
+        stringstream body;
+        if (auto a = dynamic_cast<ArticleElement *>(ele->parent)) {
+            parent = a->get();
+            body << "Working on metadata of " << a->get()->get_name() << ". ";
+        } else {
+            body << "Working on this metadata. ";
+        }
+        body << "Type ? for help.";
+        print_dialog("metadata", body.str());
+        cout << "\n";
+    }
+
+    while (ctx.get_current_working_element() == ele) {
+        if (cin.eof()) {
+            ctx.alter_cwe(nullptr);
+            break;
+        }
+        cout << "metadata> ";
+        string cmd;
+        getline(cin, cmd);
+
+        auto res = handle_command(
+                cmd,
+                ls_command_handler(ctx),
+                cw_command_handler(ctx),
                 make_tuple(
-                        "q",
-                        make_tuple("Stop working on this article"),
+                        "l",
+                        make_tuple("name", "Create a language tag"),
                         [&](auto args, auto &os, auto &es) {
-                            ctx.alter_cwe(ele->parent);
+                            auto read_n = terminal::read_name(args);
+                            if (read_n.epos == 1) {
+                                es << "too many arguments" << endl;
+                                return CommandResult::EMPTY;
+                            }
+                            try {
+                                Language lang = Language::parse(read_n.name);
+                                metadata.add_tag(new LanguageTag(lang));
+                                save_within_article(parent, es);
+                                return CommandResult::SUCCESS;
+                            } catch (const runtime_error &e) {
+                                es << e.what() << endl;
+                                return CommandResult::EMPTY;
+                            }
+                        }
+                ),
+                make_tuple(
+                        "a",
+                        make_tuple("names...", "Create a author tag"),
+                        [&](auto args, auto &os, auto &es) {
+                            auto read_n = terminal::read_name(args);
+                            if (read_n.epos == 1) {
+                                es << "lacking parameter to names" << endl;
+                                return CommandResult::EMPTY;
+                            }
+                            auto getter = new MemoryContactGetter(new Contact(read_n.name));
+                            auto tag = new AuthorTag(getter);
+                            int i = 0;
+                            while (read_n.epos < args.size()) {
+                                getter->get()->set_name(++i, read_n.name);
+                                read_n = terminal::read_name(args, read_n.epos);
+                            }
+                            getter->write_to_file();
+                            metadata.add_tag(tag);
+                            save_within_article(parent, es);
                             return CommandResult::SUCCESS;
                         }
                 ),
                 make_tuple(
-                        "q!",
-                        make_tuple("Exit the program anyway"),
+                        "t",
+                        make_tuple("title...", "Create a title tag"),
                         [&](auto args, auto &os, auto &es) {
-                            ctx.alter_cwe(nullptr);
+                            auto title = terminal::read_paragraph(args);
+                            metadata.add_tag(new TitleTag(title));
+                            save_within_article(parent, es);
                             return CommandResult::SUCCESS;
                         }
-                )
+                ),
+                rm_command_handler(ctx),
+                quit_command_handler(ctx),
+                quit_anyway_command_handler(ctx)
         );
 
         default_command_result_handler(res, cmd);
@@ -523,6 +629,8 @@ bool change_work(Context &ctx, Element *we) {
         return change_work(ctx, r);
     } else if (auto a = dynamic_cast<ArticleElement *>(we)) {
         return change_work(ctx, a->get(), a);
+    } else if (auto m = dynamic_cast<MetadataElement *>(we)) {
+        return change_work(ctx, m->get(), m);
     }
     return false;
 }

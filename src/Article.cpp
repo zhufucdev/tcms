@@ -46,7 +46,6 @@ void Article::remove_frame(tcms::FrameGetter *frame) {
     frames.erase(std::find_if(frames.begin(), frames.end(),
                               [&](auto g) { return g->get_id() == frame->get_id(); }));
     frame->remove();
-    write_to_file();
 }
 
 Metadata &Article::get_metadata() {

@@ -2,13 +2,16 @@
 #define TCMS_H
 
 #include "Article.h"
+#include "export.h"
 
 namespace tcms {
     enum ElementType {
         ROOT,
         ARTICLE,
         FRAME,
-        CONTACT
+        METADATA,
+        CONTACT,
+        TAG,
     };
 
     enum ExportVariant {
@@ -100,24 +103,25 @@ namespace tcms {
         void output(std::ostream &os, tcms::ExportVariant variant) override;
     };
 
-    class FrameElement : public Element {
-        Context &ctx;
-        FrameGetter *getter;
-    public:
-        FrameElement(FrameGetter *getter, Context &ctx);
+#define ProduceElementType(Name, Holder, Var) \
+    class Name : public Element { \
+        Holder Var; \
+        Context &ctx; \
+    public: \
+        Name(Holder Var, Context &ctx); \
+        void remove() override; \
+        bool operator==(const Element *other) override; \
+        Holder get() const; \
+        ElementType get_type() const override; \
+        Element *resolve(const std::string &path) override; \
+        void output(std::ostream &os, tcms::ExportVariant variant) override; \
+    }
 
-        FrameGetter *get() const;
+    ProduceElementType(FrameElement, FrameGetter*, getter);
 
-        void remove() override;
+    ProduceElementType(MetadataElement, Metadata &, metadata);
 
-        bool operator==(const Element *other) override;
-
-        ElementType get_type() const override;
-
-        Element *resolve(const std::string &path) override;
-
-        void output(std::ostream &os, tcms::ExportVariant variant) override;
-    };
+    ProduceElementType(TagElement, Tag*, tag);
 
     namespace behavior {
         class Behavior {
@@ -159,6 +163,27 @@ namespace tcms {
             friend std::ostream &operator<<(std::ostream &os, const ListInArticle &la);
         };
 
+        class ListMetadata : public Behavior {
+            const Metadata &metadata;
+            const bool detailed, dot_name;
+
+        public:
+            ListMetadata(const Context &ctx, const Metadata &metadata, bool detailed, bool dot_name);
+
+            friend std::ostream &operator<<(std::ostream &os, const ListMetadata &lm);
+        };
+
+        class ListInMetadata : public Behavior {
+            const Metadata &metadata;
+            const bool detailed, all;
+            const unsigned char type;
+
+        public:
+            ListInMetadata(const Context &ctx, const Metadata &metadata, bool detailed, bool all, unsigned char type_filer);
+
+            friend std::ostream &operator<<(std::ostream &os, const ListInMetadata &lm);
+        };
+
         class ListInElement : public Behavior {
             const Element *element;
             const bool detailed, all;
@@ -171,45 +196,14 @@ namespace tcms {
             friend std::ostream &operator<<(std::ostream &os, const ListInElement &le);
         };
 
-#define Ostreamable(T, Name) \
-        class Name : public Behavior { \
-            T *target; \
-        public: \
-            Name(const Context &ctx, T *target) : target(target), Behavior(ctx) {} \
-            friend std::ostream &operator<<(std::ostream &os, const Name &m); \
-        }
-
-
-        Ostreamable(TitleFrame, MarkdownTitle);
-
-        Ostreamable(ParagraphFrame, MarkdownParagraph);
-
-        Ostreamable(ImageFrame, MarkdownImage);
-
-        Ostreamable(Article, MarkdownArticle);
-
-        Ostreamable(FrameElement, MarkdownFrameElement);
-
-        Ostreamable(TitleFrame, PlainTitle);
-
-        Ostreamable(ParagraphFrame, PlainParagraph);
-
-        Ostreamable(ImageFrame, PlainImage);
-
-        Ostreamable(Article, PlainArticle);
-
-        Ostreamable(FrameElement, PlainFrameElement);
-
-        Ostreamable(TitleFrame, HTMLTitle);
-
-        Ostreamable(ParagraphFrame, HTMLParagraph);
-
-        Ostreamable(ImageFrame, HTMLImage);
-
-        Ostreamable(Article, HTMLArticle);
-
-        Ostreamable(FrameElement, HTMLFrameElement);
     }
+
+    Ostreamable(FrameElement, MarkdownFrameElement);
+
+    Ostreamable(FrameElement, PlainFrameElement);
+
+    Ostreamable(FrameElement, HTMLFrameElement);
+
 }
 
 #endif

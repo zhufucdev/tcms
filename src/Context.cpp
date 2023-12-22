@@ -30,21 +30,21 @@ namespace tcms {
     }
 
     void Context::alter_cwe(tcms::Element *new_cwe) {
-        auto node = cwe;
+        auto a = cwe;
         cwe = new_cwe;
         std::vector<Element *> removal;
-        bool share_parent = false;
-        while (node != nullptr && node->parent != nullptr) {
-            removal.push_back(node);
-            if (new_cwe != nullptr && *new_cwe == node->parent) {
-                new_cwe->parent = node->parent->parent;
-                share_parent = true;
-                break;
+        while (a != nullptr) {
+            if (new_cwe != nullptr) {
+                auto b = new_cwe;
+                while (a != b && b != nullptr) {
+                    b = b->parent;
+                }
+                if (b != nullptr) {
+                    break;
+                }
             }
-            node = node->parent;
-        }
-        if (new_cwe != nullptr && !share_parent) {
-            new_cwe->parent = node;
+            removal.push_back(a);
+            a = a->parent;
         }
         for (auto const &r: removal) {
             delete r;

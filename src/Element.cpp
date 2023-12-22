@@ -31,6 +31,7 @@ namespace tcms {
             return nullptr;
         } else {
             auto a = new ArticleElement(*iter, ctx);
+            a->parent = this;
             if (split.size() == 2) {
                 return a->resolve(split[1]);
             } else {
@@ -63,6 +64,9 @@ namespace tcms {
     }
 
     Article *ArticleElement::get() const {
+        if (article == nullptr) {
+            throw std::runtime_error("error while getting article (null pointer)");
+        }
         return article;
     }
 
@@ -72,8 +76,9 @@ namespace tcms {
 
     void ArticleElement::remove() {
         ctx.articles.erase(std::find(ctx.articles.begin(), ctx.articles.end(), article));
-        article->remove();
+        get()->remove();
         delete article;
+        article = nullptr;
     }
 
     bool ArticleElement::operator==(const tcms::Element *other) {
@@ -88,7 +93,11 @@ namespace tcms {
         if (split.empty() || split[0] == ".") {
             return this;
         } else if (split[0] == ".." && parent != nullptr) {
-            return parent->resolve(split.size() == 2 ? split[1] : "");
+            return parent->resolve(split.size() == 2 ? split[1] : ".");
+        } else if (split[0] == ".metadata") {
+            auto ele = new MetadataElement(article->get_metadata(), ctx);
+            ele->parent = this;
+            return ele;
         } else {
             auto frames = article->get_frames();
             auto id = strings::parse_number<id_type>(split[0]);
@@ -105,13 +114,13 @@ namespace tcms {
     void ArticleElement::output(std::ostream &os, tcms::ExportVariant variant) {
         switch (variant) {
             case PLAIN:
-                os << behavior::PlainArticle(ctx, get());
+                os << PlainArticle(get());
                 break;
             case MARKDOWN:
-                os << behavior::MarkdownArticle(ctx, get());
+                os << MarkdownArticle(get());
                 break;
             case HTML:
-                os << behavior::HTMLArticle(ctx, get());
+                os << HTMLArticle(get());
                 break;
         }
     }
@@ -140,26 +149,137 @@ namespace tcms {
     }
 
     FrameGetter *FrameElement::get() const {
+        if (getter == nullptr) {
+            throw std::runtime_error("error while getting frame element (null pointer)");
+        }
         return getter;
     }
 
     void FrameElement::remove() {
         if (auto a = dynamic_cast<ArticleElement *>(parent)) {
-            a->get()->remove_frame(getter);
+            auto article = a->get();
+            article->remove_frame(getter);
+            article->write_to_file();
+            delete getter;
+            getter = nullptr;
+        } else {
+            throw std::runtime_error("error while removing article element (orphan element)");
         }
     }
 
     void FrameElement::output(std::ostream &os, tcms::ExportVariant variant) {
         switch (variant) {
             case PLAIN:
-                os << behavior::PlainFrameElement(ctx, this);
+                os << PlainFrameElement(this);
                 break;
             case MARKDOWN:
-                os << behavior::MarkdownFrameElement(ctx, this);
+                os << MarkdownFrameElement(this);
                 break;
             case HTML:
-                os << behavior::HTMLFrameElement(ctx, this);
+                os << HTMLFrameElement(this);
                 break;
         }
     }
+
+    MetadataElement::MetadataElement(tcms::Metadata &metadata, Context &ctx) : metadata(metadata), ctx(ctx) {}
+
+    ElementType MetadataElement::get_type() const {
+        return METADATA;
+    }
+
+    Element *MetadataElement::resolve(const std::string &path) {
+        auto split = strings::split(path, '/', 2);
+        if (split.empty() || split[0] == ".") {
+            return this;
+        } else if (split[0] == "..") {
+            return parent->resolve(split.size() == 2 ? split[1] : ".");
+        } else {
+            auto idx = strings::parse_number<std::vector<std::shared_ptr<Tag>>::size_type>(split[0]);
+            if (metadata.get_tags().size() <= idx) {
+                return nullptr;
+            } else {
+                auto element = new TagElement(metadata.get_tags()[idx], ctx);
+                element->parent = this;
+                return element->resolve(split.size() == 2 ? split[1] : ".");
+            }
+        }
+    }
+
+    Metadata &MetadataElement::get() const {
+        return metadata;
+    }
+
+    void MetadataElement::remove() {
+        metadata.clear();
+        if (auto a = dynamic_cast<ArticleElement *>(parent)) {
+            a->get()->write_to_file();
+        } else {
+            throw std::runtime_error("error while clearing metadata element (orphan)");
+        }
+    }
+
+    void MetadataElement::output(std::ostream &os, tcms::ExportVariant variant) {
+
+    }
+
+    bool MetadataElement::operator==(const tcms::Element *other) {
+        if (auto m = dynamic_cast<const MetadataElement *>(other)) {
+            return m->metadata == metadata;
+        }
+        return false;
+    }
+
+    TagElement::TagElement(tcms::Tag *tag, tcms::Context &ctx) : tag(tag), ctx(ctx) {}
+
+    bool TagElement::operator==(const tcms::Element *other) {
+        if (auto u = dynamic_cast<const TagElement *>(other)) {
+            return tag == u->tag;
+        }
+        return false;
+    }
+
+    ElementType TagElement::get_type() const {
+        return ElementType::TAG;
+    }
+
+    Element *TagElement::resolve(const std::string &path) {
+        auto split = strings::split(path, '/', 2);
+        if (split.empty() || split.size() == 1 && split[0] == ".") {
+            return this;
+        } else if (split.size() == 2 && split[0] == ".") {
+            return resolve(split[1]);
+        } else if (split[0] == "..") {
+            return parent->resolve(split.size() == 2 ? split[1] : "");
+        }
+        return nullptr;
+    }
+
+    Tag *TagElement::get() const {
+        if (tag == nullptr) {
+            throw std::runtime_error("error while getting language tag (null pointer)");
+        }
+        return tag;
+    }
+
+    void TagElement::remove() {
+        if (auto m = dynamic_cast<MetadataElement *>(parent)) {
+            auto &metadata = m->get();
+            metadata.remove_tag(tag);
+            delete tag;
+            tag = nullptr;
+            if (auto a = dynamic_cast<ArticleElement *>(parent->parent)) {
+                auto article = a->get();
+                article->write_to_file();
+            } else {
+                throw std::runtime_error("error while removing language tag (orphaned metadata)");
+            }
+        } else {
+            throw std::runtime_error("error while removing language tag (orphan)");
+        }
+    }
+
+    void TagElement::output(std::ostream &os, tcms::ExportVariant variant) {
+        os << get()->to_string();
+    }
+
 }

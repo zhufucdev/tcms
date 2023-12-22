@@ -20,7 +20,7 @@ unsigned char TitleFrame::get_depth() const {
 }
 
 FrameType TitleFrame::get_type() const {
-    return FrameType::TITLE;
+    return FrameType::HEADER;
 }
 
 std::string TitleFrame::to_string() const {
@@ -30,7 +30,7 @@ std::string TitleFrame::to_string() const {
 ByteArray TitleFrame::serialize() const {
     size_t len = sizeof(id_type) + sizeof(depth) + content.length() + 2;
     char *buf = (char *) calloc(len, sizeof(char));
-    buf[0] = FrameType::TITLE;
+    buf[0] = FrameType::HEADER;
     bytes::write_number(buf + 1, id);
     bytes::write_number(buf + 1 + sizeof(id_type), depth);
     std::memcpy(buf + 1 + sizeof(id_type) + sizeof(depth), content.c_str(), content.length());
@@ -38,7 +38,7 @@ ByteArray TitleFrame::serialize() const {
 }
 
 TitleFrame *TitleFrame::deserialize(ByteArray ba) {
-    if (ba.content[0] != FrameType::TITLE) {
+    if (ba.content[0] != FrameType::HEADER) {
         throw std::runtime_error("unexpected header (deserializing TitleFrame)");
     }
     auto id = bytes::read_number<id_type>(ba.content + 1);

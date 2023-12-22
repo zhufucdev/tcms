@@ -5,24 +5,24 @@
 
 using namespace tcms;
 
-enum TagType {
-    LANG = 0b00000001,
-    AUTHOR = 0b00000010,
-    TITLE = 0b00000100,
-};
-
 Tag *Tag::deserialize(ByteArray ba) {
     switch (ba.content[0]) {
         case TagType::LANG:
             return LanguageTag::deserialize(ba);
         case TagType::AUTHOR:
             return AuthorTag::deserialize(ba);
+        case TagType::TITLE:
+            return TitleTag::deserialize(ba);
         default:
-            throw std::runtime_error("Unknown type (deserializing Tag)");
+            throw std::runtime_error("unknown type (deserializing Tag)");
     }
 }
 
 LanguageTag::LanguageTag(Language language) : lang(language), Tag() {}
+
+TagType LanguageTag::get_type() const {
+    return TagType::LANG;
+}
 
 ByteArray tcms::LanguageTag::serialize() const {
     auto str = lang.to_string();
@@ -35,7 +35,7 @@ ByteArray tcms::LanguageTag::serialize() const {
 
 LanguageTag *LanguageTag::deserialize(ByteArray ba) {
     if (ba.content[0] != TagType::LANG) {
-        throw std::runtime_error("Unexpected header (deserializing LanguageTag)");
+        throw std::runtime_error("unexpected header (deserializing LanguageTag)");
     }
     auto str = std::string(ba.content + 1);
     return new LanguageTag{Language::parse(str)};
@@ -50,12 +50,22 @@ Language tcms::LanguageTag::get_language() const {
     return lang;
 }
 
+bool LanguageTag::operator==(const tcms::LanguageTag &other) const {
+    return static_cast<Language>(other.lang) == lang;
+}
+
 AuthorTag::AuthorTag(id_type author_id) : author(new ContactGetter(author_id)), Tag() {}
 
 AuthorTag::AuthorTag(Contact *contact) : author(new MemoryContactGetter(contact)) {}
 
-Contact *tcms::AuthorTag::get_author() const {
+AuthorTag::AuthorTag(tcms::ContactGetter *getter) : author(getter) {}
+
+Contact *AuthorTag::get_author() const {
     return author->get();
+}
+
+TagType AuthorTag::get_type() const {
+    return TagType::AUTHOR;
 }
 
 std::string AuthorTag::to_string() const {
@@ -70,15 +80,43 @@ ByteArray AuthorTag::serialize() const {
     return {buf, sizeof(size_t)};
 }
 
+bool AuthorTag::operator==(const tcms::AuthorTag &other) {
+    return author == other.author;
+}
+
 AuthorTag *AuthorTag::deserialize(ByteArray ba) {
     if (ba.content[0] != TagType::AUTHOR) {
-        throw std::runtime_error("Unexpected header (deserializing AuthorTag)");
+        throw std::runtime_error("unexpected header (deserializing AuthorTag)");
     }
     auto cid = bytes::read_number<id_type>(ba.content + 1);
     return new AuthorTag(cid);
 }
 
-Metadata::Metadata(const std::vector<std::shared_ptr<Tag>> &tags) : tags(tags) {}
+TitleTag::TitleTag(const std::string &title) : title(title) {}
+
+TagType TitleTag::get_type() const {
+    return TagType::TITLE;
+}
+
+std::string TitleTag::to_string() const {
+    return title;
+}
+
+ByteArray TitleTag::serialize() const {
+    auto buf = (char *) calloc(title.length() + 2, sizeof(char));
+    buf[0] = TagType::TITLE;
+    std::memcpy(buf + 1, title.c_str(), title.length());
+    return {buf, title.length() + 2};
+}
+
+TitleTag *TitleTag::deserialize(ByteArray ba) {
+    if (ba.content[0] != TagType::TITLE) {
+        throw std::runtime_error("unexpected header (deserializing TitleTag)");
+    }
+    return new TitleTag({ba.content + 1});
+}
+
+Metadata::Metadata(const std::vector<Tag *> &tags) : tags(tags) {}
 
 Metadata::Metadata() : tags() {}
 
@@ -87,7 +125,7 @@ Metadata::~Metadata() = default;
 std::vector<Tag *> Metadata::get_tags() const {
     auto r = std::vector<Tag *>(tags.size());
     for (int i = 0; i < tags.size(); ++i) {
-        r[i] = tags[i].get();
+        r[i] = tags[i];
     }
     return r;
 }
@@ -113,7 +151,7 @@ ByteArray tcms::Metadata::serialize() const {
 }
 
 Metadata tcms::Metadata::deserialize(ByteArray ba) {
-    std::vector<std::shared_ptr<Tag>> tags;
+    std::vector<Tag *> tags;
     size_t current_pos = 0;
     while (current_pos < ba.len) {
         auto curr_size = bytes::read_number<size_t>(ba.content + current_pos);
@@ -121,7 +159,7 @@ Metadata tcms::Metadata::deserialize(ByteArray ba) {
         if (curr_ba.len <= 0) {
             break;
         }
-        auto sp = std::shared_ptr<Tag>(Tag::deserialize(curr_ba));
+        auto sp = Tag::deserialize(curr_ba);
         tags.push_back(sp);
         current_pos += curr_size + sizeof(size_t);
     }
@@ -129,5 +167,20 @@ Metadata tcms::Metadata::deserialize(ByteArray ba) {
 }
 
 void Metadata::add_tag(Tag *tag) {
-    tags.push_back(std::shared_ptr<Tag>(tag));
+    tags.push_back(tag);
+}
+
+void Metadata::remove_tag(tcms::Tag *tag) {
+    tags.erase(std::find(tags.begin(), tags.end(), tag));
+}
+
+void Metadata::clear() {
+    for (auto t: tags) {
+        delete t;
+    }
+    tags.clear();
+}
+
+bool Metadata::operator==(const tcms::Metadata &other) const {
+    return other.tags == tags;
 }
