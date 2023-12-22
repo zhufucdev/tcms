@@ -133,16 +133,16 @@ std::ostream &tcms::behavior::operator<<(std::ostream &os, const tcms::behavior:
             os << i << '\t';
             switch (tags[i]->get_type()) {
                 case LANG:
-                    os << "lang";
+                    os << "lang" << '\t' << tags[i]->to_string();
                     break;
                 case AUTHOR:
-                    os << "author";
+                    os << "author" << '\t' << tags[i]->to_string() << '\t'
+                       << fs::path_to_string(dynamic_cast<AuthorTag *>(tags[i])->get_author()->get_path());
                     break;
                 case TITLE:
-                    os << "title";
+                    os << "title\t" << '\t' << tags[i]->to_string();
                     break;
             }
-            os << '\t' << tags[i]->to_string();
             if (i < tags.size() - 1) {
                 os << '\n';
             }

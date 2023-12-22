@@ -60,8 +60,8 @@ AuthorTag::AuthorTag(Contact *contact) : author(new MemoryContactGetter(contact)
 
 AuthorTag::AuthorTag(tcms::ContactGetter *getter) : author(getter) {}
 
-Contact *AuthorTag::get_author() const {
-    return author->get();
+ContactGetter *AuthorTag::get_author() const {
+    return author;
 }
 
 TagType AuthorTag::get_type() const {

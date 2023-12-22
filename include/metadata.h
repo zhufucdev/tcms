@@ -55,7 +55,7 @@ namespace tcms {
 
         ~AuthorTag() override = default;
 
-        Contact *get_author() const;
+        ContactGetter *get_author() const;
 
         TagType get_type() const override;
 
