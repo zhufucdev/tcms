@@ -318,6 +318,10 @@ inline auto ls_command_handler(Context &ctx) {
                 } else {
                     read_n.epos = 1;
                 }
+                if (target == nullptr) {
+                    es << "no such element" << endl;
+                    return CommandResult::EMPTY;
+                }
                 auto read_f = terminal::read_flags(args, read_n.epos);
                 os << behavior::ListInElement(
                         ctx,
@@ -662,24 +666,39 @@ bool change_work(Context &ctx, Metadata &metadata, MetadataElement *ele) {
                 ),
                 make_tuple(
                         "a",
-                        make_tuple("names...", "-l name", "Create or link an author tag"),
+                        make_tuple("-l name", "names...", "Create or link an author tag"),
                         [&](auto args, auto &os, auto &es) {
-                            auto read_n = terminal::read_name(args);
-                            if (read_n.epos == 1) {
-                                es << "lacking parameter to names" << endl;
+                            auto linking = terminal::read_flags(args).get_parameter('l', "");
+                            if (!linking.empty()) {
+                                auto linker_tag = ele->resolve(linking);
+                                if (auto te = dynamic_cast<TagElement *>(linker_tag)) {
+                                    if (auto at = dynamic_cast<AuthorTag *>(te->get())) {
+                                        auto tag = new AuthorTag(at->get_author());
+                                        metadata.add_tag(tag);
+                                        save_within_article(parent, es);
+                                        return CommandResult::SUCCESS;
+                                    }
+                                }
+                                es << linking << " is not an author tag" << endl;
                                 return CommandResult::EMPTY;
+                            } else {
+                                auto read_n = terminal::read_name(args);
+                                if (read_n.epos == 1) {
+                                    es << "lacking parameter to names" << endl;
+                                    return CommandResult::EMPTY;
+                                }
+                                auto getter = new MemoryContactGetter(new Contact(read_n.name));
+                                auto tag = new AuthorTag(getter);
+                                int i = 0;
+                                while (read_n.epos < args.size()) {
+                                    getter->get()->set_name(++i, read_n.name);
+                                    read_n = terminal::read_name(args, read_n.epos);
+                                }
+                                getter->write_to_file();
+                                metadata.add_tag(tag);
+                                save_within_article(parent, es);
+                                return CommandResult::SUCCESS;
                             }
-                            auto getter = new MemoryContactGetter(new Contact(read_n.name));
-                            auto tag = new AuthorTag(getter);
-                            int i = 0;
-                            while (read_n.epos < args.size()) {
-                                getter->get()->set_name(++i, read_n.name);
-                                read_n = terminal::read_name(args, read_n.epos);
-                            }
-                            getter->write_to_file();
-                            metadata.add_tag(tag);
-                            save_within_article(parent, es);
-                            return CommandResult::SUCCESS;
                         }
                 ),
                 make_tuple(
@@ -705,6 +724,7 @@ bool change_work(Context &ctx, Metadata &metadata, MetadataElement *ele) {
                             }
                         }
                 ),
+                clear_command_handler(),
                 quit_command_handler(ctx),
                 quit_anyway_command_handler(ctx)
         );

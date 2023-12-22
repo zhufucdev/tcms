@@ -21,18 +21,20 @@ std::string strings::trim(const std::string &str) {
 std::vector<std::string>
 strings::split(const std::string &str, char separator, std::vector<std::string>::size_type limit) {
     std::vector<std::string> buf;
-    int i, j;
+    std::vector<std::string>::size_type i, j;
     for (i = 0, j = 0; i < str.length(); i++) {
         if (str[i] == separator) {
-            buf.emplace_back(str.substr(j, i - j));
-            j = i + 1;
-        }
-        if (limit > 0 && buf.size() >= limit) {
-            break;
+            if (limit > 0 && buf.size() >= limit - 1) {
+                i = str.length();
+                break;
+            } else {
+                buf.emplace_back(str.substr(j, i - j));
+                j = i + 1;
+            }
         }
     }
     if (i > j) {
-        buf.emplace_back(str.substr(j, i));
+        buf.emplace_back(str.substr(j, i - j));
     }
     return buf;
 }

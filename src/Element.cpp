@@ -97,7 +97,7 @@ namespace tcms {
         } else if (split[0] == ".metadata") {
             auto ele = new MetadataElement(article->get_metadata(), ctx);
             ele->parent = this;
-            return ele;
+            return ele->resolve(split.size() == 2 ? split[1] : ".");
         } else {
             auto frames = article->get_frames();
             auto id = strings::parse_number<id_type>(split[0]);
