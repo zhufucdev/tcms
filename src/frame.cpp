@@ -104,6 +104,7 @@ fs::Path ImageFrame::get_image_path() const {
 void ImageFrame::set_file(const fs::Path &path) {
     extension = fs::get_extension(path);
     if (!fs::copy(path, get_image_path())) {
+        fs::remove_file(get_image_path());
         extension = "";
         throw std::runtime_error("error while copying image file (copying " + fs::path_to_string(path) + ")");
     }
