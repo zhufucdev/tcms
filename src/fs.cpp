@@ -1,5 +1,6 @@
 #include "fs.h"
 #include <fstream>
+#include <stdexcept>
 #include <iostream>
 
 using namespace fs;
@@ -243,6 +244,9 @@ void fs::write_file(const fs::Path &dst, const ByteArray &src) {
 
 ByteArray fs::read_file(const Path &src) {
     std::ifstream ifs(path_to_string(src), std::ifstream::binary);
+    if (!ifs.is_open()) {
+        throw std::runtime_error("error while reading " + path_to_string(src) + ": closed stream");
+    }
     ifs.seekg(0, std::ifstream::end);
     size_t len = ifs.tellg();
     ifs.seekg(0, std::ifstream::beg);

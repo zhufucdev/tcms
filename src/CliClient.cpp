@@ -54,13 +54,18 @@ CommandResult command_file_pipe(const vector<string> &args, ostream &os, ostream
             return res;
         } else {
             // input stream
-            auto ba = fs::read_file(fs::string_to_path(direction.name));
-            auto effective_args = args;
-            effective_args.erase(effective_args.begin() + pip_pos, effective_args.end());
-            for (const auto &new_arg: terminal::read_args(ba.content)) {
-                effective_args.push_back(new_arg);
+            try {
+                auto ba = fs::read_file(fs::string_to_path(direction.name));
+                auto effective_args = args;
+                effective_args.erase(effective_args.begin() + pip_pos, effective_args.end());
+                for (const auto &new_arg: terminal::read_args(ba.content)) {
+                    effective_args.push_back(new_arg);
+                }
+                return handler(effective_args, cout, cerr);
+            } catch (const std::exception &e) {
+                es << e.what() << endl;
+                return CommandResult::EMPTY;
             }
-            return handler(effective_args, cout, cerr);
         }
     }
 }
