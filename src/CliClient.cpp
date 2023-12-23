@@ -19,7 +19,7 @@ enum CommandResult {
 };
 
 template<typename Handler>
-CommandResult command_pipelined(const vector<string> &args, const Handler &handler) {
+CommandResult command_file_pipe(const vector<string> &args, ostream &os, ostream &es, const Handler &handler) {
     int pip_pos;
     unsigned char mode;
     for (pip_pos = 0; pip_pos < args.size(); ++pip_pos) {
@@ -36,7 +36,7 @@ CommandResult command_pipelined(const vector<string> &args, const Handler &handl
     }
     if (pip_pos >= args.size()) {
         // not piped
-        return handler(args, cout, cerr);
+        return handler(args, os, es);
     } else if (pip_pos == args.size() - 1) {
         cerr << "invalid pipeline syntax";
         return CommandResult::EMPTY;
@@ -66,22 +66,23 @@ CommandResult command_pipelined(const vector<string> &args, const Handler &handl
 }
 
 template<typename Handler>
-CommandResult handle_command(const vector<string> &args, const Handler &last_handler) {
+CommandResult handle_command(const vector<string> &args, ostream &os, ostream &es, const Handler &last_handler) {
     if (args[0] == get<0>(last_handler)) {
-        return command_pipelined(args, get<2>(last_handler));
+        return command_file_pipe(args, os, es, get<2>(last_handler));
     } else {
         return CommandResult::NO_MATCH;
     }
 }
 
 template<typename Handler, typename ...Handlers>
-CommandResult handle_command(const vector<string> &args, const Handler &first_handler, const Handlers &...handlers) {
+CommandResult handle_command(const vector<string> &args, ostream &os, ostream &es, const Handler &first_handler,
+                             const Handlers &...handlers) {
     if (args.empty()) {
         return CommandResult::EMPTY;
     } else if (get<0>(first_handler) == args[0]) {
-        return command_pipelined(args, get<2>(first_handler));
+        return command_file_pipe(args, os, es, get<2>(first_handler));
     } else {
-        return handle_command(args, handlers...);
+        return handle_command(args, os, es, handlers...);
     }
 }
 
@@ -124,7 +125,26 @@ CommandResult handle_command(const string &input, const Handler &first_handler, 
         cout << endl;
         return CommandResult::SUCCESS;
     } else {
-        return handle_command(args, first_handler, handlers...);
+        int last_pipe = -1, pipe_pos = 0;
+        stringstream buf;
+        CommandResult last_res = CommandResult::SUCCESS;
+        while (pipe_pos < args.size() && last_res == CommandResult::SUCCESS) {
+            for (; pipe_pos < args.size() && args[pipe_pos] != "|"; ++pipe_pos);
+            buf = stringstream();
+            if (pipe_pos < args.size()) {
+                last_res = handle_command(vector<string>(args.begin() + last_pipe + 1, args.begin() + pipe_pos), buf,
+                                          cerr, first_handler, handlers...);
+                args = vector<string>(args.begin() + pipe_pos + 1, args.end());
+                for (const auto &arg: terminal::read_args(buf.str())) {
+                    args.push_back(arg);
+                }
+                last_pipe = pipe_pos;
+            } else {
+                last_res = handle_command(args, buf, cerr, first_handler, handlers...);
+            }
+        }
+        cout << buf.str();
+        return last_res;
     }
 }
 
