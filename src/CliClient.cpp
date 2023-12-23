@@ -780,8 +780,8 @@ bool change_work(Context &ctx, Metadata &metadata, MetadataElement *ele) {
                                 auto tag = new AuthorTag(getter);
                                 int i = 0;
                                 while (read_n.epos < args.size()) {
-                                    getter->get()->set_name(++i, read_n.name);
                                     read_n = terminal::read_name(args, read_n.epos);
+                                    getter->get()->set_name(++i, read_n.name);
                                 }
                                 getter->write_to_file();
                                 metadata.add_tag(tag);
