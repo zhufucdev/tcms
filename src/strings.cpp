@@ -19,7 +19,7 @@ std::string strings::trim(const std::string &str) {
 }
 
 std::vector<std::string>
-strings::split(const std::string &str, const std::string& separators, std::vector<std::string>::size_type limit) {
+strings::split(const std::string &str, const std::string &separators, std::vector<std::string>::size_type limit) {
     std::vector<std::string> buf;
     std::vector<std::string>::size_type i, j;
     for (i = 0, j = 0; i < str.length(); i++) {
@@ -49,13 +49,16 @@ strings::split(const std::string &str, const std::string& separators, std::vecto
 std::string
 strings::join(std::vector<std::string>::const_iterator first, std::vector<std::string>::const_iterator last,
               char separator) {
+    if (first == last) {
+        return "";
+    }
     std::string str;
     while (first != last) {
         str += *first;
         str += separator;
         first++;
     }
-    return std::string{str.c_str(), str.length() - 1};
+    return str.substr(0, str.length() - 1);
 }
 
 std::string strings::truncate(const std::string &str, std::string::size_type cut) {
