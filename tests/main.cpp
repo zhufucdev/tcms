@@ -96,7 +96,7 @@ void test_strings_match() {
 }
 
 void test_strings_split() {
-    test::assert_eq("strings_split_limit_2", strings::split("../touch/grass", '/', 2),
+    test::assert_eq("strings_split_limit_2", strings::split("../touch/grass", "/", 2),
                     std::vector<std::string>{"..", "touch/grass"});
 }
 
