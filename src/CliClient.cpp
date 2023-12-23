@@ -651,7 +651,6 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
                                     return CommandResult::EMPTY;
                                 } else {
                                     auto i = new ImageFrame(read_n.name);
-                                    read_n = terminal::read_name(args, read_n.epos);
                                     try {
                                         i->set_file(fs::string_to_path(read_nf.name));
                                     } catch (const std::runtime_error &e) {
