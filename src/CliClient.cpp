@@ -135,6 +135,7 @@ CommandResult handle_command(const string &input, const Handler &first_handler, 
                 last_res = handle_command(vector<string>(args.begin() + last_pipe + 1, args.begin() + pipe_pos), buf,
                                           cerr, first_handler, handlers...);
                 args = vector<string>(args.begin() + pipe_pos + 1, args.end());
+                for (pipe_pos = 0; pipe_pos < args.size() && args[pipe_pos] != "|"; ++pipe_pos);
                 for (const auto &arg: terminal::read_args(buf.str())) {
                     args.push_back(arg);
                 }
@@ -347,6 +348,8 @@ inline auto ls_command_handler(Context &ctx) {
                        "List matching articles, frames or contacts"),
             [&](auto args, auto &os, auto &es) {
                 auto read_n = terminal::read_name(args);
+                Element *target = nullptr;
+                bool printed = false;
                 int flags_offset = 1;
                 for (int i = 1; i < args.size(); ++i) {
                     if (terminal::is_flag(args[i])) {
@@ -357,20 +360,25 @@ inline auto ls_command_handler(Context &ctx) {
                 auto read_f = terminal::read_flags(args, flags_offset);
                 while (true) {
                     if (!terminal::is_flag(read_n.name)) {
-                        auto target = ctx.get_current_working_element()->resolve(read_n.name);
-                        if (target == nullptr) {
-                            es << "no such element" << endl;
-                            return CommandResult::EMPTY;
-                        }
-                        os << behavior::ListInElement(
-                                ctx,
-                                target,
-                                read_f.has_single('l'),
-                                read_f.has_single('a'),
-                                frame_filter_by_str(read_f.get_parameter('t', "*"))
-                        );
-                        os << endl;
+                        target = ctx.get_current_working_element()->resolve(read_n.name);
+                    } else if (!printed) {
+                        target = ctx.get_current_working_element();
+                    } else {
+                        break;
                     }
+                    if (target == nullptr) {
+                        es << "no such element" << endl;
+                        return CommandResult::EMPTY;
+                    }
+                    os << behavior::ListInElement(
+                            ctx,
+                            target,
+                            read_f.has_single('l'),
+                            read_f.has_single('a'),
+                            frame_filter_by_str(read_f.get_parameter('t', "*"))
+                    );
+                    os << endl;
+                    printed = true;
                     if (read_n.epos >= args.size()) {
                         break;
                     }
@@ -419,7 +427,7 @@ template<typename Capture, typename Search>
 inline auto find_command_handler(Capture capture, const string &prompt, Search s) {
     return make_tuple(
             "find",
-            make_tuple("keyword", "-i --ignoring-case", "-r --regex", prompt),
+            make_tuple("keyword", "-i --ignoring-case", "-r --regex", "-s --source", prompt),
             [&](auto args, auto &os, auto &es) {
                 auto read_n = terminal::read_name(args);
                 if (read_n.epos == 1) {
@@ -428,9 +436,10 @@ inline auto find_command_handler(Capture capture, const string &prompt, Search s
                 }
                 auto read_f = terminal::read_flags(args, read_n.epos);
                 auto ic = read_f.has_single('i') || read_f.has_named("ignoring-case"),
-                        regex = read_f.has_single('r') || read_f.has_named("regex");
+                        regex = read_f.has_single('r') || read_f.has_named("regex"),
+                        source = read_f.has_single('s') || read_f.has_named("source");
                 try {
-                    s(capture, os, read_n.name, ic, regex);
+                    s(capture, os, read_n.name, ic, regex, source);
                 } catch (const std::runtime_error &e) {
                     es << "error while searching: " << e.what() << endl;
                 }
@@ -489,7 +498,7 @@ bool change_work(Context &ctx, RootElement *ele) {
                 cw_command_handler(ctx),
                 find_command_handler<Context &>(
                         ctx, "Search for an article",
-                        [&](auto &ctx, auto &os, auto &k, auto ic, auto r) {
+                        [&](auto &ctx, auto &os, auto &k, auto ic, auto r, auto s) {
                             for (auto const &article: ctx.articles) {
                                 auto name = article->get_name();
                                 if (strings::match(name, k, ic, r)) {
@@ -498,7 +507,11 @@ bool change_work(Context &ctx, RootElement *ele) {
                                     for (auto tag: article->get_metadata().get_tags()) {
                                         if (strings::match(tag->to_string(), k, ic, r)) {
                                             auto ele = TagElement(tag, ctx);
-                                            os << name << " (" << PlainTagElement(ele) << ")\n";
+                                            os << name;
+                                            if (s) {
+                                                os << " (" << PlainTagElement(ele) << ")";
+                                            }
+                                            os << "\n";
                                             break;
                                         }
                                     }
@@ -631,7 +644,7 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
                 ln_command_handler(ctx),
                 find_command_handler<Article &>(
                         *article, "Search for a frame",
-                        [&](auto &a, auto &os, auto &k, auto ic, auto r) {
+                        [&](auto &a, auto &os, auto &k, auto ic, auto r, auto s) {
                             for (auto f: a.get_frames()) {
                                 if (strings::match(f->get()->to_string(), k, ic, r)) {
                                     os << f->get_id() << '\t';
@@ -760,12 +773,20 @@ bool change_work(Context &ctx, Metadata &metadata, MetadataElement *ele) {
                 cat_command_handler(ctx),
                 find_command_handler(
                         make_tuple<Metadata &, Context &>(metadata, ctx), "Find a tag",
-                        [&](auto &m, auto &os, auto &k, auto ic, auto r) {
-                            for (auto tag: get<0>(m).get_tags()) {
-                                if (strings::match(tag->to_string(), k, ic, r)) {
-                                    auto ele = TagElement(tag, get<1>(m));
-                                    os << PlainTagElement(ele) << '\n';
+                        [&](auto &m, auto &os, auto &k, auto ic, auto r, auto s) {
+                            auto tags = get<0>(m).get_tags();
+                            for (int i = 0; i < tags.size(); ++i) {
+                                if (strings::match(tags[i]->to_string(), k, ic, r)) {
+                                    if (s) {
+                                        auto ele = TagElement(tags[i], get<1>(m));
+                                        os << PlainTagElement(ele) << '\n';
+                                    } else {
+                                        os << i << '\t';
+                                    }
                                 }
+                            }
+                            if (!s) {
+                                os << '\n';
                             }
                         }
                 ),
