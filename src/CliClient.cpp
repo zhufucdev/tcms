@@ -325,7 +325,12 @@ inline auto rm_command_handler(Context &ctx) {
                         es << "no such element: " << read.name << endl;
                         return CommandResult::EMPTY;
                     }
-                    r->remove();
+                    try {
+                        r->remove();
+                    } catch (const std::exception &e) {
+                        es << "error while removing " << read.name << ": " << e.what() << endl;
+                        return CommandResult::EMPTY;
+                    }
                     if (read.epos >= args.size()) {
                         break;
                     }
