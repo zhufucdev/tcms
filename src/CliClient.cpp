@@ -461,6 +461,24 @@ inline auto find_command_handler(Capture capture, const string &prompt, Search s
     );
 }
 
+inline auto echo_command_handler() {
+    return make_tuple(
+            "echo",
+            make_tuple("--tab-break", "params...", "Repeat the params with additional breaks"),
+            [&](auto args, auto &os, auto &es) {
+                auto read_f = terminal::read_flags(args);
+                auto params = terminal::read_paragraph(args, read_f.epos);
+                os << params;
+                if (read_f.has_named("tab-break")) {
+                    os << '\t';
+                } else {
+                    os << '\n';
+                }
+                return CommandResult::SUCCESS;
+            }
+    );
+}
+
 void tcms::CliClient::event_loop() {
     print_dialog("TCMS - The Content Management System", "Welcome to TCMS. Type ? for help.");
     change_work(ctx, new RootElement(ctx));
@@ -534,6 +552,7 @@ bool change_work(Context &ctx, RootElement *ele) {
                 ),
                 cat_command_handler(ctx),
                 ln_command_handler(ctx),
+                echo_command_handler(),
                 clear_command_handler(),
                 make_tuple(
                         "q",
@@ -666,6 +685,7 @@ bool change_work(Context &ctx, Article *article, ArticleElement *ele) {
                             os << '\n';
                         }
                 ),
+                echo_command_handler(),
                 clear_command_handler(),
                 quit_command_handler(ctx),
                 quit_anyway_command_handler(ctx)
@@ -803,6 +823,7 @@ bool change_work(Context &ctx, Metadata &metadata, MetadataElement *ele) {
                             }
                         }
                 ),
+                echo_command_handler(),
                 clear_command_handler(),
                 quit_command_handler(ctx),
                 quit_anyway_command_handler(ctx)
