@@ -113,7 +113,7 @@ TitleTag *TitleTag::deserialize(ByteArray ba) {
     if (ba.content[0] != TagType::TITLE) {
         throw std::runtime_error("unexpected header (deserializing TitleTag)");
     }
-    return new TitleTag({ba.content + 1});
+    return new TitleTag(ba.content + 1);
 }
 
 Metadata::Metadata(const std::vector<Tag *> &tags) : tags(tags) {}
