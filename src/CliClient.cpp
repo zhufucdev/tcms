@@ -136,8 +136,20 @@ CommandResult handle_command(const string &input, const Handler &first_handler, 
                                           cerr, first_handler, handlers...);
                 args = vector<string>(args.begin() + pipe_pos + 1, args.end());
                 for (pipe_pos = 0; pipe_pos < args.size() && args[pipe_pos] != "|"; ++pipe_pos);
-                for (const auto &arg: terminal::read_args(buf.str())) {
-                    args.push_back(arg);
+                auto dash_iter = std::find(args.begin(), args.end(), "-");
+                if (dash_iter == args.end()) {
+                    for (const auto &arg: terminal::read_args(buf.str())) {
+                        args.push_back(arg);
+                    }
+                } else {
+                    auto cp = vector<string>(args.begin(), dash_iter);
+                    for (const auto &arg: terminal::read_args(buf.str())) {
+                        cp.push_back(arg);
+                    }
+                    for (dash_iter++; dash_iter != args.end(); dash_iter++) {
+                        cp.push_back(*dash_iter);
+                    }
+                    args = cp;
                 }
                 last_pipe = pipe_pos;
             } else {
