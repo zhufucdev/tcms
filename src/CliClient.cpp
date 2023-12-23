@@ -744,7 +744,7 @@ bool change_work(Context &ctx, Metadata &metadata, MetadataElement *ele) {
                                 auto linker_tag = ele->resolve(linking);
                                 if (auto te = dynamic_cast<TagElement *>(linker_tag)) {
                                     if (auto at = dynamic_cast<AuthorTag *>(te->get())) {
-                                        auto tag = new AuthorTag(at->get_author());
+                                        auto tag = new AuthorTag(at->get_author()->clone());
                                         metadata.add_tag(tag);
                                         save_within_article(parent, es);
                                         return CommandResult::SUCCESS;

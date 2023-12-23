@@ -26,6 +26,8 @@ namespace tcms {
 
         virtual Contact *get() const;
 
+        virtual ContactGetter *clone() const;
+
         ByteArray serialize() const override;
 
         static fs::Path get_path(id_type id);
@@ -37,6 +39,8 @@ namespace tcms {
         explicit MemoryContactGetter(Contact *contact);
 
         Contact *get() const override;
+
+        ContactGetter * clone() const override;
     };
 }
 

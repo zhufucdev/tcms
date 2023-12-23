@@ -40,6 +40,10 @@ Contact *ContactGetter::get() const {
     return contact;
 }
 
+ContactGetter *ContactGetter::clone() const {
+    return new ContactGetter(id);
+}
+
 ByteArray ContactGetter::serialize() const {
     return get()->serialize();
 }
@@ -56,4 +60,8 @@ MemoryContactGetter::MemoryContactGetter(tcms::Contact *contact)
 
 Contact *MemoryContactGetter::get() const {
     return contact;
+}
+
+ContactGetter *MemoryContactGetter::clone() const {
+    return new MemoryContactGetter(contact);
 }
