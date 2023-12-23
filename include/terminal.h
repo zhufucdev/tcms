@@ -43,6 +43,8 @@ namespace terminal {
     std::string read_paragraph(const std::vector<std::string> &args, str_vec_size_t offset = 1);
 
     ReadFlags read_flags(const std::vector<std::string> &args, str_vec_size_t offset = 1);
+
+    std::string name_safe(const std::string &src);
 }
 
 #endif //TCMS_TERMINAL_H

@@ -115,3 +115,14 @@ std::string ReadFlags::get_parameter(char flag, const std::string &def) {
         return def;
     }
 }
+
+std::string terminal::name_safe(const std::string &src) {
+    auto cp = src;
+    for (int i = 0; i < cp.length(); ++i) {
+        if (cp[i] == ' ') {
+            cp.replace(i, 1, "\\ ");
+            i += 2;
+        }
+    }
+    return cp;
+}

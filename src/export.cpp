@@ -1,5 +1,6 @@
 #include "export.h"
 #include "tcms.h"
+#include "terminal.h"
 #include <ostream>
 
 using namespace tcms;
@@ -36,7 +37,7 @@ std::ostream &tcms::operator<<(std::ostream &os, const PlainParagraph &m) {
 }
 
 std::ostream &tcms::operator<<(std::ostream &os, const PlainImage &m) {
-    os << m.target.get_caption() << " " << fs::path_to_string(m.target.get_image_path());
+    os << terminal::name_safe(m.target.get_caption()) << " " << fs::path_to_string(m.target.get_image_path());
     return os;
 }
 
