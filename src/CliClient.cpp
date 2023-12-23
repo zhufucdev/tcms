@@ -137,7 +137,7 @@ CommandResult handle_command(const string &input, const Handler &first_handler, 
                 args = vector<string>(args.begin() + pipe_pos + 1, args.end());
                 for (pipe_pos = 0; pipe_pos < args.size() && args[pipe_pos] != "|"; ++pipe_pos);
                 auto dash_iter = std::find(args.begin(), args.end(), "-");
-                if (dash_iter == args.end()) {
+                if (std::distance(args.begin(), dash_iter) >= pipe_pos) {
                     for (const auto &arg: terminal::read_args(buf.str())) {
                         args.insert(args.begin() + pipe_pos, arg);
                         pipe_pos++;
