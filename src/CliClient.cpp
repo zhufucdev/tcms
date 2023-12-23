@@ -347,9 +347,7 @@ inline auto ls_command_handler(Context &ctx) {
             make_tuple("name", "-l", "-a", "-t type", "-m",
                        "List matching articles, frames or contacts"),
             [&](auto args, auto &os, auto &es) {
-                auto read_n = terminal::read_name(args);
                 Element *target = nullptr;
-                bool printed = false;
                 int flags_offset = 1;
                 for (int i = 1; i < args.size(); ++i) {
                     if (terminal::is_flag(args[i])) {
@@ -357,14 +355,17 @@ inline auto ls_command_handler(Context &ctx) {
                         break;
                     }
                 }
+                auto printed = false;
                 auto read_f = terminal::read_flags(args, flags_offset);
+                auto read_n = terminal::read_name(args);
                 while (true) {
-                    if (!terminal::is_flag(read_n.name)) {
-                        target = ctx.get_current_working_element()->resolve(read_n.name);
-                    } else if (!printed) {
-                        target = ctx.get_current_working_element();
-                    } else {
+                    while (terminal::is_flag(read_n.name)) {
+                        read_n = terminal::read_name(args, read_n.epos);
+                    }
+                    if (read_n.epos >= args.size() && printed) {
                         break;
+                    } else {
+                        target = ctx.get_current_working_element()->resolve(read_n.name);
                     }
                     if (target == nullptr) {
                         es << "no such element" << endl;
@@ -378,10 +379,10 @@ inline auto ls_command_handler(Context &ctx) {
                             frame_filter_by_str(read_f.get_parameter('t', "*"))
                     );
                     os << endl;
-                    printed = true;
                     if (read_n.epos >= args.size()) {
                         break;
                     }
+                    printed = true;
                     read_n = terminal::read_name(args, read_n.epos);
                 }
                 return CommandResult::SUCCESS;
