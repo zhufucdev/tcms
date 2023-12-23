@@ -139,8 +139,10 @@ CommandResult handle_command(const string &input, const Handler &first_handler, 
                 auto dash_iter = std::find(args.begin(), args.end(), "-");
                 if (dash_iter == args.end()) {
                     for (const auto &arg: terminal::read_args(buf.str())) {
-                        args.push_back(arg);
+                        args.insert(args.begin() + pipe_pos, arg);
+                        pipe_pos++;
                     }
+                    pipe_pos--;
                 } else {
                     auto cp = vector<string>(args.begin(), dash_iter);
                     for (const auto &arg: terminal::read_args(buf.str())) {
