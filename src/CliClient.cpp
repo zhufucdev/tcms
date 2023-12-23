@@ -21,13 +21,16 @@ enum CommandResult {
 template<typename Handler>
 CommandResult command_pipelined(const vector<string> &args, const Handler &handler) {
     int pip_pos;
-    bool append_mode;
+    unsigned char mode;
     for (pip_pos = 0; pip_pos < args.size(); ++pip_pos) {
         if (args[pip_pos] == ">") {
-            append_mode = false;
+            mode = 0;
             break;
         } else if (args[pip_pos] == ">>") {
-            append_mode = true;
+            mode = 1;
+            break;
+        } else if (args[pip_pos] == "<" || args[pip_pos] == "<<") {
+            mode = 2;
             break;
         }
     }
@@ -42,11 +45,23 @@ CommandResult command_pipelined(const vector<string> &args, const Handler &handl
         if (direction.epos != args.size()) {
             cerr << "warning: ignoring redundant parameters after pipeline direction" << endl;
         }
-        ofstream ofs(direction.name, ofstream::out | (append_mode ? ofstream::app : ofstream::trunc));
-        vector<std::string> sliced_args(args.begin(), args.begin() + pip_pos);
-        auto res = handler(sliced_args, ofs, cerr);
-        ofs.close();
-        return res;
+        if (mode <= 1) {
+            // output stream
+            ofstream ofs(direction.name, ofstream::out | (mode == 1 ? ofstream::app : ofstream::trunc));
+            vector<std::string> sliced_args(args.begin(), args.begin() + pip_pos);
+            auto res = handler(sliced_args, ofs, cerr);
+            ofs.close();
+            return res;
+        } else {
+            // input stream
+            auto ba = fs::read_file(fs::string_to_path(direction.name));
+            auto effective_args = args;
+            effective_args.erase(effective_args.begin() + pip_pos, effective_args.end());
+            for (const auto &new_arg: terminal::read_args(ba.content)) {
+                effective_args.push_back(new_arg);
+            }
+            return handler(effective_args, cout, cerr);
+        }
     }
 }
 
@@ -60,7 +75,7 @@ CommandResult handle_command(const vector<string> &args, const Handler &last_han
 }
 
 template<typename Handler, typename ...Handlers>
-CommandResult handle_command(const vector<string> args, const Handler &first_handler, const Handlers &...handlers) {
+CommandResult handle_command(const vector<string> &args, const Handler &first_handler, const Handlers &...handlers) {
     if (args.empty()) {
         return CommandResult::EMPTY;
     } else if (get<0>(first_handler) == args[0]) {
@@ -102,7 +117,7 @@ void print_help(const Handler &first_handler, const Handlers &...handlers) {
 
 template<typename Handler, typename ...Handlers>
 CommandResult handle_command(const string &input, const Handler &first_handler, const Handlers &...handlers) {
-    auto args = strings::split(input, ' ');
+    auto args = terminal::read_args(input);
     if (args.size() == 1 && args[0] == "?") {
         cout << "\nHelp:\n\n";
         print_help(first_handler, handlers...);
@@ -312,25 +327,35 @@ inline auto ls_command_handler(Context &ctx) {
                        "List matching articles, frames or contacts"),
             [&](auto args, auto &os, auto &es) {
                 auto read_n = terminal::read_name(args);
-                auto target = ctx.get_current_working_element();
-                if (read_n.name.length() > 1 && read_n.name[0] != '-') {
-                    target = target->resolve(read_n.name);
-                } else {
-                    read_n.epos = 1;
+                int flags_offset = 1;
+                for (int i = 1; i < args.size(); ++i) {
+                    if (terminal::is_flag(args[i])) {
+                        flags_offset = i;
+                        break;
+                    }
                 }
-                if (target == nullptr) {
-                    es << "no such element" << endl;
-                    return CommandResult::EMPTY;
+                auto read_f = terminal::read_flags(args, flags_offset);
+                while (true) {
+                    if (!terminal::is_flag(read_n.name)) {
+                        auto target = ctx.get_current_working_element()->resolve(read_n.name);
+                        if (target == nullptr) {
+                            es << "no such element" << endl;
+                            return CommandResult::EMPTY;
+                        }
+                        os << behavior::ListInElement(
+                                ctx,
+                                target,
+                                read_f.has_single('l'),
+                                read_f.has_single('a'),
+                                frame_filter_by_str(read_f.get_parameter('t', "*"))
+                        );
+                        os << endl;
+                    }
+                    if (read_n.epos >= args.size()) {
+                        break;
+                    }
+                    read_n = terminal::read_name(args, read_n.epos);
                 }
-                auto read_f = terminal::read_flags(args, read_n.epos);
-                os << behavior::ListInElement(
-                        ctx,
-                        target,
-                        read_f.has_single('l'),
-                        read_f.has_single('a'),
-                        frame_filter_by_str(read_f.get_parameter('t', "*"))
-                );
-                os << endl;
                 return CommandResult::SUCCESS;
             }
     );

@@ -33,6 +33,10 @@ void terminal::clear_screen() {
 
 #endif
 
+std::vector<std::string> terminal::read_args(const std::string &str) {
+    return strings::split(str, " \t\n");
+}
+
 ReadName terminal::read_name(const std::vector<std::string> &args, str_vec_size_t offset) {
     str_vec_size_t i = offset;
     if (i >= args.size()) {
@@ -52,10 +56,6 @@ ReadName terminal::read_name(const std::vector<std::string> &args, str_vec_size_
 
 std::string terminal::read_paragraph(const std::vector<std::string> &args, str_vec_size_t offset) {
     return strings::join(args.begin() + offset, args.end(), ' ');
-}
-
-inline bool is_flag(const std::string &arg) {
-    return arg.length() >= 2 && arg[0] == '-';
 }
 
 ReadFlags terminal::read_flags(const std::vector<std::string> &args, str_vec_size_t offset) {

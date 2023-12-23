@@ -19,11 +19,18 @@ std::string strings::trim(const std::string &str) {
 }
 
 std::vector<std::string>
-strings::split(const std::string &str, char separator, std::vector<std::string>::size_type limit) {
+strings::split(const std::string &str, const std::string& separators, std::vector<std::string>::size_type limit) {
     std::vector<std::string> buf;
     std::vector<std::string>::size_type i, j;
     for (i = 0, j = 0; i < str.length(); i++) {
-        if (str[i] == separator) {
+        auto separated = false;
+        for (const auto &s: separators) {
+            if (str[i] == s) {
+                separated = true;
+                break;
+            }
+        }
+        if (separated) {
             if (limit > 0 && buf.size() >= limit - 1) {
                 i = str.length();
                 break;

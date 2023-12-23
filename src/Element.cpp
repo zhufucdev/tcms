@@ -19,7 +19,7 @@ namespace tcms {
     }
 
     Element *RootElement::resolve(const std::string &path) {
-        auto split = strings::split(path, '/', 2);
+        auto split = strings::split(path, "/", 2);
         if (split.empty() || split.size() == 1 && split[0] == ".") {
             return this;
         }
@@ -89,7 +89,7 @@ namespace tcms {
     }
 
     Element *ArticleElement::resolve(const std::string &path) {
-        auto split = strings::split(path, '/', 2);
+        auto split = strings::split(path, "/", 2);
         if (split.empty() || split[0] == ".") {
             return this;
         } else if (split[0] == ".." && parent != nullptr) {
@@ -216,7 +216,7 @@ namespace tcms {
     }
 
     Element *MetadataElement::resolve(const std::string &path) {
-        auto split = strings::split(path, '/', 2);
+        auto split = strings::split(path, "/", 2);
         if (split.empty() || split[0] == ".") {
             return this;
         } else if (split[0] == "..") {
@@ -292,7 +292,7 @@ namespace tcms {
     }
 
     Element *TagElement::resolve(const std::string &path) {
-        auto split = strings::split(path, '/', 2);
+        auto split = strings::split(path, "/", 2);
         if (split.empty() || split.size() == 1 && split[0] == ".") {
             return this;
         } else if (split.size() == 2 && split[0] == ".") {

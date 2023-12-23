@@ -32,6 +32,12 @@ namespace terminal {
 
     void clear_screen();
 
+    inline bool is_flag(const std::string &arg) {
+        return arg.length() >= 2 && arg[0] == '-';
+    }
+
+    std::vector<std::string> read_args(const std::string &str);
+
     ReadName read_name(const std::vector<std::string> &args, str_vec_size_t offset = 1);
 
     std::string read_paragraph(const std::vector<std::string> &args, str_vec_size_t offset = 1);
