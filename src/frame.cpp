@@ -64,7 +64,7 @@ ByteArray ParagraphFrame::serialize() const {
     char *buf = (char *) calloc(len, sizeof(char));
     buf[0] = FrameType::PARAGRAPH;
     bytes::write_number(buf + 1, id);
-    std::memcpy(buf + 1 + sizeof(char), content.c_str(), content.length());
+    std::memcpy(buf + sizeof(id_type) + sizeof(char), content.c_str(), content.length());
     return {buf, len};
 }
 
