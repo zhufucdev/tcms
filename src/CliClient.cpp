@@ -125,14 +125,14 @@ CommandResult handle_command(const string &input, const Handler &first_handler, 
         cout << endl;
         return CommandResult::SUCCESS;
     } else {
-        int last_pipe = -1, pipe_pos = 0;
+        int pipe_pos = 0;
         stringstream buf;
         CommandResult last_res = CommandResult::SUCCESS;
         while (pipe_pos < args.size() && last_res == CommandResult::SUCCESS) {
             for (; pipe_pos < args.size() && args[pipe_pos] != "|"; ++pipe_pos);
             buf = stringstream();
             if (pipe_pos < args.size()) {
-                last_res = handle_command(vector<string>(args.begin() + last_pipe + 1, args.begin() + pipe_pos), buf,
+                last_res = handle_command(vector<string>(args.begin(), args.begin() + pipe_pos), buf,
                                           cerr, first_handler, handlers...);
                 args = vector<string>(args.begin() + pipe_pos + 1, args.end());
                 for (pipe_pos = 0; pipe_pos < args.size() && args[pipe_pos] != "|"; ++pipe_pos);
@@ -151,7 +151,6 @@ CommandResult handle_command(const string &input, const Handler &first_handler, 
                     }
                     args = cp;
                 }
-                last_pipe = pipe_pos;
             } else {
                 last_res = handle_command(args, buf, cerr, first_handler, handlers...);
             }
