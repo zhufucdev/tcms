@@ -5,7 +5,7 @@
 #include "terminal.h"
 #include "FrameGetter.h"
 #include "ContactGetter.h"
-#include "strings.h"
+#include "strhelper.h"
 
 std::map<id_type, size_t> tcms::FrameGetter::rc{};
 std::map<id_type, tcms::Frame *> tcms::FrameGetter::cache{};

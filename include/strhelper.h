@@ -2,8 +2,8 @@
 // Created by Steve Reed on 2023/12/15.
 //
 
-#ifndef TCMS_STRINGS_H
-#define TCMS_STRINGS_H
+#ifndef TCMS_STRHELPER_H
+#define TCMS_STRHELPER_H
 
 #include <string>
 #include <vector>
@@ -43,4 +43,4 @@ namespace strings {
     bool match(const std::string &src, const std::string &keyword, bool ignoring_case = false, bool regex = false);
 }
 
-#endif //TCMS_STRINGS_H
+#endif //TCMS_STRHELPER_H

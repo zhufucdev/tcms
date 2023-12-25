@@ -1,5 +1,5 @@
 #include "tcms.h"
-#include "strings.h"
+#include "strhelper.h"
 #include <ostream>
 
 namespace tcms {

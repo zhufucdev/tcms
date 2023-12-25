@@ -1,5 +1,5 @@
 #include "terminal.h"
-#include "strings.h"
+#include "strhelper.h"
 #include <iostream>
 
 using namespace terminal;
