@@ -1,5 +1,6 @@
 #include "Article.h"
 #include <stdexcept>
+#include <algorithm>
 
 using namespace tcms;
 

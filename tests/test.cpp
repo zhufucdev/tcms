@@ -1,6 +1,7 @@
 #include "test.h"
 #include "terminal.h"
 #include <iostream>
+#include <cstring>
 
 static int all_test_count = 0;
 static int current_test = 0;

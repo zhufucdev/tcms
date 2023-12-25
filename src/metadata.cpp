@@ -2,6 +2,7 @@
 #include "language.h"
 #include "Contact.h"
 #include <stdexcept>
+#include <algorithm>
 
 using namespace tcms;
 

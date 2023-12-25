@@ -1,5 +1,6 @@
 #include "language.h"
 #include <regex>
+#include <cstring>
 
 Language::Language(const char *language_code, const char *locale_code) {
     std::strcpy(lang_code, language_code);

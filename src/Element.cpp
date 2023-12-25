@@ -1,6 +1,7 @@
 #include "tcms.h"
 #include "strhelper.h"
 #include <ostream>
+#include <algorithm>
 
 namespace tcms {
     Element::Element() : parent(nullptr) {}
