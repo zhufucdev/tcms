@@ -21,6 +21,8 @@ namespace tcms {
     public:
         FrameGetter(id_type id, FrameType type);
 
+        FrameGetter(const FrameGetter &f);
+
         ~FrameGetter();
 
         fs::Path get_path() const override;

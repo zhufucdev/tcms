@@ -18,6 +18,8 @@ namespace tcms {
     public:
         explicit ContactGetter(id_type id);
 
+        ContactGetter(const ContactGetter &c);
+
         ~ContactGetter();
 
         fs::Path get_path() const override;

@@ -11,6 +11,10 @@ FrameGetter::FrameGetter(const id_type id, const tcms::FrameType type) : id(id),
     rc[id]++;
 }
 
+FrameGetter::FrameGetter(const tcms::FrameGetter &f) : id(f.id) {
+    rc[id]++;
+}
+
 FrameGetter::~FrameGetter() {
     rc[id]--;
     if (rc[id] <= 0) {

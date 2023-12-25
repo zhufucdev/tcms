@@ -10,6 +10,10 @@ ContactGetter::ContactGetter(id_type id) : id(id) {
     rc[id]++;
 }
 
+ContactGetter::ContactGetter(const ContactGetter &c) : id(c.id) {
+    rc[id]++;
+}
+
 ContactGetter::~ContactGetter() {
     rc[id]--;
     if (rc[id] <= 0) {
