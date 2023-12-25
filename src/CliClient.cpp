@@ -278,34 +278,48 @@ inline auto cw_command_handler(Context &ctx) {
 inline auto cat_command_handler(Context &ctx) {
     return make_tuple(
             "cat",
-            make_tuple("name", "-m --markdown", "-h --html", "Print an element, optionally in given variant"),
+            make_tuple("name...", "-m --markdown", "-h --html", "Print an element, optionally in given variant"),
             [&](auto args, auto &os, auto &es) {
-                auto read_n = terminal::read_name(args);
-                if (read_n.epos < args.size() - 1) {
-                    es << "too many arguments" << endl;
-                    return CommandResult::EMPTY;
-                } else {
-                    auto target = ctx.get_current_working_element()->resolve(read_n.name);
-                    if (target == nullptr) {
-                        es << "no such element: " << read_n.name << endl;
-                        return CommandResult::EMPTY;
-                    } else {
-                        auto read_f = terminal::read_flags(args, read_n.epos);
-                        ExportVariant variant = PLAIN;
-                        if (read_f.has_single('m') || read_f.has_named("markdown")) {
-                            variant = MARKDOWN;
-                        } else if (read_f.has_single('h') || read_f.has_named("html")) {
-                            variant = HTML;
-                        }
-                        try {
-                            target->output(os, variant);
-                            return CommandResult::SUCCESS;
-                        } catch (const std::exception &e) {
-                            es << "Error while reading frame: " << e.what() << endl;
-                            return CommandResult::EMPTY;
-                        }
+                int flag_offset = 1;
+                for (int i = 1; i < args.size(); ++i) {
+                    if (terminal::is_flag(args[i])) {
+                        flag_offset = i;
                     }
                 }
+                auto read_f = terminal::read_flags(args, flag_offset);
+                auto read_n = terminal::read_name(args, flag_offset == 1 ? read_f.epos : 1);
+                bool printed = false;
+
+                while (true) {
+                    if (!printed || !read_n.name.empty()) {
+                        auto target = ctx.get_current_working_element()->resolve(read_n.name);
+                        if (target == nullptr) {
+                            es << "no such element: " << read_n.name << endl;
+                            return CommandResult::EMPTY;
+                        } else {
+                            ExportVariant variant = PLAIN;
+                            if (read_f.has_single('m') || read_f.has_named("markdown")) {
+                                variant = MARKDOWN;
+                            } else if (read_f.has_single('h') || read_f.has_named("html")) {
+                                variant = HTML;
+                            }
+                            try {
+                                target->output(os, variant);
+                            } catch (const std::exception &e) {
+                                es << "Error while reading frame: " << e.what() << endl;
+                                return CommandResult::EMPTY;
+                            }
+                            printed = true;
+                        }
+                    }
+                    if (read_n.epos >= args.size()) {
+                        break;
+                    }
+                    do {
+                        read_n = terminal::read_name(args, read_n.epos);
+                    } while (terminal::is_flag(read_n.name));
+                }
+                return CommandResult::SUCCESS;
             }
     );
 }
@@ -321,6 +335,9 @@ inline auto rm_command_handler(Context &ctx) {
                 }
                 auto read = terminal::read_name(args);
                 while (true) {
+                    if (read.name.empty()) {
+                        continue;
+                    }
                     auto r = ctx.get_current_working_element()->resolve(read.name);
                     if (r == nullptr) {
                         es << "no such element: " << read.name << endl;
