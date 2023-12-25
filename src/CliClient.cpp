@@ -1,6 +1,6 @@
 #include "tcms.h"
 #include "fs.h"
-#include "strings.h"
+#include "strhelper.h"
 #include "terminal.h"
 #include <iostream>
 #include <fstream>
