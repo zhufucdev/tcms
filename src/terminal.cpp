@@ -68,6 +68,7 @@ ReadFlags terminal::read_flags(const std::vector<std::string> &args, str_vec_siz
         auto is_named = false;
         if (read_n.name.length() == 2 && read_n.epos < args.size()) {
             auto flag = read_n.name[1];
+            auto pre_epos = read_n.epos;
             read_n = read_name(args, read_n.epos);
             if (!is_flag(read_n.name)) {
                 parameters[flag] = read_n.name;
@@ -76,6 +77,7 @@ ReadFlags terminal::read_flags(const std::vector<std::string> &args, str_vec_siz
                 continue;
             } else {
                 read_n.name = std::string{'-', flag};
+                read_n.epos = pre_epos;
             }
         } else if (read_n.name.length() > 2 && read_n.name.substr(0, 2) == "--") {
             is_named = true;
